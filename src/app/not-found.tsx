@@ -1,0 +1,1 @@
+import Link from "next/link"; export default function NotFound(){return <main className="container page" style={{textAlign:"center"}}><span className="eyebrow">خطای 404</span><h1>این صفحه پیدا نشد</h1><p className="muted">ممکن است نشانی تغییر کرده باشد. از صفحه اصلی ادامه دهید.</p><Link className="btn" href="/">بازگشت به خانه</Link></main>}

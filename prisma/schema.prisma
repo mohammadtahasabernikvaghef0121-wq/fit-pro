@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum RequestType {
+  NUTRITION
+  TRAINING
+  COMBINED
+}
+
+enum RequestStatus {
+  DRAFT
+  NEW
+  PAID
+  UNDER_REVIEW
+  IN_PROGRESS
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum DiscussionKind {
+  COMMENT
+  QUESTION
+  REPLY
+}
+
+enum SupportStatus {
+  PENDING
+  IN_PROGRESS
+  REPLIED
+  CLOSED
+}
+
+enum SupportChannel {
+  TELEGRAM
+  WEBSITE
+}
+
+model User {
+  id        String            @id @default(cuid())
+  phone     String            @unique
+  name      String?
+  role      Role              @default(CLIENT)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  requests  CoachingRequest[]
+  sessions  Session[]
+  discussionPosts DiscussionPost[]
+  supportRequests SupportRequest[]
+}
+
+model DiscussionPost {
+  id        String         @id @default(cuid())
+  content   String         @db.VarChar(2000)
+  title     String?        @db.VarChar(120)
+  category  String?        @db.VarChar(40)
+  email     String?        @db.VarChar(254)
+  kind      DiscussionKind
+  parentId  String?
+  authorId  String
+  createdAt DateTime       @default(now())
+  author    User           @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  parent    DiscussionPost? @relation("DiscussionReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   DiscussionPost[] @relation("DiscussionReplies")
+
+  @@index([parentId, createdAt])
+  @@index([kind, createdAt])
+  @@index([authorId, createdAt])
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  hash      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model CoachingPackage {
+  id           String            @id @default(cuid())
+  slug         String            @unique
+  title        String
+  description  String
+  durationDays Int
+  priceRials   BigInt
+  deliverables Json
+  requestType  RequestType
+  active       Boolean           @default(true)
+  sortOrder    Int               @default(0)
+  createdAt    DateTime          @default(now())
+  requests     CoachingRequest[]
+}
+
+model CoachingRequest {
+  id            String          @id @default(cuid())
+  userId        String
+  packageId     String
+  requestType   RequestType
+  status        RequestStatus   @default(NEW)
+  intake        Json
+  healthConsent Boolean         @default(false)
+  adminNotes    String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  user          User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  package       CoachingPackage @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  payments      Payment[]
+  plans         DeliveredPlan[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model Payment {
+  id              String          @id @default(cuid())
+  requestId       String
+  amountRials     BigInt
+  status          PaymentStatus   @default(PENDING)
+  orderRef        String          @unique
+  trackId         String?         @unique
+  gatewayResponse Json?
+  paidAt          DateTime?
+  telegramNotifiedAt DateTime?
+  telegramNotifyLeaseUntil DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  request         CoachingRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+}
+
+model DeliveredPlan {
+  id         String          @id @default(cuid())
+  requestId  String
+  title      String
+  storageKey String          @unique
+  mimeType   String
+  sizeBytes  Int
+  createdAt  DateTime        @default(now())
+  request    CoachingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model SupportRequest {
+  id                    String        @id @default(cuid())
+  requestNumber         Int           @unique @default(autoincrement())
+  telegramUpdateId      Int?          @unique
+  telegramChatId        String?
+  telegramUserId        String?
+  username              String?
+  firstName             String
+  lastName              String?
+  phone                 String?
+  userId                String?
+  source                SupportChannel @default(TELEGRAM)
+  intake                Json?
+  messageText           String?       @db.Text
+  telegramMessageId     Int?
+  groupNotificationId   Int?
+  groupMediaMessageId   Int?
+  attachment            Json?
+  status                SupportStatus @default(PENDING)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  closedAt              DateTime?
+  user                  User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  replies               SupportReply[]
+
+  @@index([status, createdAt])
+  @@index([telegramUserId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model SupportReply {
+  id                    String        @id @default(cuid())
+  requestId             String
+  adminTelegramUserId   String?
+  text                  String        @db.Text
+  isAdmin               Boolean       @default(false)
+  createdAt             DateTime      @default(now())
+  request               SupportRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, createdAt])
+}
+
+model SiteVisit {
+  id        String   @id @default(cuid())
+  path      String   @db.VarChar(200)
+  visitedAt DateTime @default(now())
+
+  @@index([visitedAt])
+}

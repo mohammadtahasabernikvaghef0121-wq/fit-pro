@@ -1,0 +1,133 @@
+.aboutCard {
+  max-width: 800px;
+}
+
+.aboutCard h2 {
+  margin-top: 28px;
+}
+
+.certificates {
+  padding-top: 22px;
+}
+
+.sectionHeading {
+  margin-bottom: 16px;
+}
+
+.sectionHeading h2 {
+  margin: 5px 0 2px;
+  font-size: clamp(20px, 3vw, 26px);
+}
+
+.sectionHeading p {
+  margin: 0;
+}
+
+.certificateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.certificateCard {
+  display: flex;
+  direction: rtl;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.certificateCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 10px 28px #3e171b12;
+}
+
+.certificateCard:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.imageFrame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.5;
+  overflow: hidden;
+  background: #f7f5f2;
+}
+
+.certificateImage {
+  object-fit: contain;
+}
+
+.certificateLabel {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px 15px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.certificateLabel strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.certificateDescription {
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+@media (max-width: 800px) {
+  .certificateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .certificates {
+    padding-top: 18px;
+  }
+
+  .certificateGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .certificateCard {
+    border-radius: 12px;
+  }
+
+  .certificateLabel {
+    font-size: 12px;
+  }
+
+  .certificateLabel strong {
+    font-size: 14px;
+  }
+
+  .certificateDescription {
+    font-size: 13px;
+    line-height: 1.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .certificateCard {
+    transition: none;
+  }
+
+  .certificateCard:hover {
+    transform: none;
+  }
+}

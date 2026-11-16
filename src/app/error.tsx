@@ -1,0 +1,1 @@
+"use client"; export default function ErrorPage({reset}:{error:Error&{digest?:string};reset:()=>void}){return <main className="container page"><div className="card"><h1>مشکلی پیش آمد</h1><p className="muted">بارگذاری این بخش با خطا روبه‌رو شد. دوباره تلاش کنید.</p><button className="btn" onClick={()=>reset()}>تلاش دوباره</button></div></main>}

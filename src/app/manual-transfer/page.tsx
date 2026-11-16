@@ -1,0 +1,6 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+export const metadata: Metadata = { title: "راهنمای کارت‌به‌کارت", robots: { index: false, follow: false } };
+export default function ManualTransferMockup() {
+  return <main className="container page shop-page" dir="rtl"><span className="eyebrow">روش پرداخت جایگزین</span><h1>کارت‌به‌کارت</h1><div className="transfer-mock-banner">پیش‌نمایش رابط کاربری · این صفحه هنوز پرداخت یا سفارش واقعی ثبت نمی‌کند.</div><section className="transfer-card"><h2>اطلاعات واریز</h2><div className="transfer-row"><span>شماره کارت</span><b dir="ltr">XXXX-XXXX-XXXX-8302</b></div><div className="transfer-row"><span>به نام</span><b>محمد طاها صابر نیک واقف</b></div><div className="transfer-pending"><b>وضعیت سفارش: Pending verification</b><p>رسید یا تصویر کارت‌به‌کارت به‌تنهایی پرداخت را تأیید نمی‌کند. سفارش باید تا بررسی مستقل تراکنش توسط مدیر در انتظار تأیید بماند.</p></div><button className="btn" disabled title="این بارگذاری تا اتصال امن به سفارش فعال نیست">بارگذاری رسید (پس از اتصال سامانه فعال می‌شود)</button><p className="muted" style={{fontSize:13}}>در نسخه متصل، رسید فقط برای بررسی مدیر ذخیره می‌شود و وضعیت پرداخت را خودکار تغییر نمی‌دهد.</p></section><p><Link href="/shop" className="text-link">← بازگشت به فروشگاه</Link></p></main>;
+}
