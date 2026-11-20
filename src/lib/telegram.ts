@@ -139,7 +139,7 @@ export async function sendPrivateSupportNoticeToTelegram(requestNumber: number) 
   if (!token || !adminChatId || !ownerId || !/^\d+$/.test(adminChatId) || adminChatId.startsWith("0") || adminChatId !== ownerId) return false;
   const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: adminChatId, text: `درخواست پشتیبانی خصوصی جدید #${requestNumber} در پنل مالک سایت ثبت شد. متن گفت‌وگو را فقط از پنل امن /admin/support مشاهده و پاسخ دهید.`, disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: adminChatId, text: `درخواست پشتیبانی خصوصی جدید #${requestNumber} در سایت ثبت شد.`, disable_web_page_preview: true }),
     cache: "no-store", signal: AbortSignal.timeout(10_000),
   });
   const result = await response.json().catch(() => null);

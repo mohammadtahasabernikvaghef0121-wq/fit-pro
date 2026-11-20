@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatTomans } from "@/lib/money";
+import { DEMO_RECEIPT_PREFIX, type DemoReceipt } from "@/lib/demo-receipt";
 
 export type ShopProduct = { id: string; slug: string; title: string; description: string; durationDays: number; priceRials: number; deliverables: string[]; quantity?: number; };
 const CART_KEY = "fitpro-shop-cart-v1";
@@ -36,7 +37,7 @@ export function CartView() {
   return <>
     {items.length === 0 ? <section className="shop-empty"><span className="shop-icon">🛍</span><h2>سبد خرید شما خالی است</h2><p className="muted">از بین برنامه‌های مربی‌گری، گزینه مناسب خود را انتخاب کنید.</p><Link href="/shop" className="btn">رفتن به فروشگاه</Link></section> : <div className="shop-layout">
       <section className="shop-products">{items.map(item => <article className="shop-cart-item" key={item.id}><div className="shop-product-mark">FP</div><div className="shop-cart-info"><h2>{item.title}</h2><p className="muted">{item.durationDays.toLocaleString("en-US")} روز همراهی مربی</p><b>{formatTomans(item.priceRials)} تومان</b><div className="quantity-control" aria-label={`تعداد ${item.title}`}><button aria-label="کاهش تعداد" onClick={() => setQuantity(item.id, (item.quantity ?? 1) - 1)}>−</button><span>{(item.quantity ?? 1).toLocaleString("en-US")}</span><button aria-label="افزایش تعداد" onClick={() => setQuantity(item.id, (item.quantity ?? 1) + 1)}>+</button></div></div><button className="text-button" onClick={() => remove(item.id)} aria-label={`حذف ${item.title} از سبد`}>حذف</button><Link className="btn small" href={`/login?next=${encodeURIComponent(`/dashboard/requests/new?package=${item.id}`)}`}>سفارش واقعی</Link></article>)}</section>
-      <aside className="shop-summary"><span className="eyebrow">خلاصه سفارش</span><div className="shop-total"><span>جمع جزء</span><b>{formatTomans(total)} تومان</b></div><div className="shop-total"><span>هزینه ارسال (خدمت دیجیتال)</span><b>رایگان</b></div><div className="shop-grand-total"><span>مجموع</span><b>{formatTomans(total)} تومان</b></div><Link href="/checkout" className="btn shop-full">تکمیل پرداخت نمایشی</Link><p className="muted shop-summary-note">برای خرید واقعی، از دکمه «سفارش واقعی» کنار هر برنامه استفاده کنید.</p></aside>
+      <aside className="shop-summary"><span className="eyebrow">خلاصه سفارش</span><div className="shop-total"><span>جمع جزء</span><b>{formatTomans(total)} تومان</b></div><div className="shop-total"><span>هزینه ارسال (خدمت دیجیتال)</span><b>رایگان</b></div><div className="shop-grand-total"><span>مجموع</span><b>{formatTomans(total)} تومان</b></div><Link href="/checkout" className="btn shop-full">پرداخت آزمایشی و تکمیل اطلاعات</Link><p className="muted shop-summary-note">پرداخت فقط نمایشی است؛ بعد از آن فرم مشخصات برنامه باز می‌شود. برای خرید واقعی از «سفارش واقعی» کنار برنامه استفاده کنید.</p></aside>
     </div>}
   </>;
 }
@@ -49,14 +50,84 @@ export function DemoPayment() {
   </main>;
 }
 
-export function DemoCheckoutFlow() {
-  const [items, setItems] = useState<ShopProduct[]>([]); const [busy, setBusy] = useState(false); const [order, setOrder] = useState<{ id: string; amount: number; date: string; status: "success" | "failed" } | null>(null); const [showDetails, setShowDetails] = useState(false);
+export function DemoCheckoutFlow({ linkToIntake = false, mockMode = false }: { linkToIntake?: boolean; mockMode?: boolean }) {
+  const [items, setItems] = useState<ShopProduct[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   useEffect(() => { const timer = window.setTimeout(() => { try { setItems(JSON.parse(sessionStorage.getItem(CART_KEY) ?? "[]")); } catch { setItems([]); } }, 0); return () => window.clearTimeout(timer); }, []);
-  const subtotal = items.reduce((sum, item) => sum + item.priceRials * (item.quantity ?? 1), 0); const delivery = 0; const total = subtotal + delivery;
-  function completePayment(fail = false) { setBusy(true); window.setTimeout(() => { setOrder({ id: `DEMO-${Date.now().toString().slice(-8)}`, amount: total, date: new Intl.DateTimeFormat("fa-IR-u-ca-persian-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date()), status: fail ? "failed" : "success" }); setBusy(false); }, 650); }
-  function pay(event: React.FormEvent<HTMLFormElement>) { event.preventDefault(); completePayment(); }
-  return <main className="container page shop-page" dir="rtl"><div className="demo-banner" role="note"><span>DEMO MODE</span><b>NO REAL MONEY TRANSFER</b></div>{order ? <section className={`demo-success ${order.status === "failed" ? "demo-failed" : ""}`}><span className="demo-check">{order.status === "success" ? "✓" : "!"}</span><span className="eyebrow">DEMO ORDER · NO REAL PAYMENT</span><h1>{order.status === "success" ? "پرداخت آزمایشی موفق بود" : "پرداخت آزمایشی ناموفق بود"}</h1><p>شماره سفارش نمایشی: <b dir="ltr">{order.id}</b></p><p>وضعیت پرداخت: <b>{order.status === "success" ? "موفق (شبیه‌سازی‌شده)" : "ناموفق (شبیه‌سازی‌شده)"}</b></p><p>مبلغ: <b>{formatTomans(order.amount)} تومان</b></p><p>تاریخ: <b>{order.date}</b></p><strong>پول واقعی منتقل نشده و هیچ اطلاعات کارتی ذخیره نشده است. این سفارش نمایشی در تاریخچه سفارش‌ها ثبت نشده است.</strong><button className="btn light" onClick={() => setShowDetails(!showDetails)}>{showDetails ? "بستن جزئیات" : "مشاهده سفارش نمایشی"}</button>{showDetails && <div className="demo-order-detail"><h2>جزئیات نمایشی سفارش</h2>{items.map(item => <p key={item.id}>{item.title} × {(item.quantity ?? 1).toLocaleString("en-US")}</p>)}{items.length === 0 && <p>کالای نمونه آزمایشی × 1</p>}<p>هزینه ارسال: رایگان · خدمت دیجیتال</p></div>}<Link href="/shop" className="text-link">بازگشت به فروشگاه</Link></section> : <>
-    <span className="eyebrow">تسویه‌حساب نمایشی</span><h1>اطلاعات سفارش</h1><p className="muted">برای تست از مقادیر ساختگی استفاده کنید. اطلاعات زیر فقط تا بسته‌شدن این صفحه در حافظه موقت فرم می‌ماند و ارسال یا ذخیره نمی‌شود.</p>
-    <div className="checkout-layout"><form className="checkout-form" onSubmit={pay}><section><h2>اطلاعات مشتری و نشانی</h2><div className="checkout-fields"><div className="field"><label htmlFor="demo-name">نام و نام خانوادگی</label><input id="demo-name" autoComplete="name" required placeholder="نام نمایشی"/></div><div className="field"><label htmlFor="demo-phone">شماره همراه</label><input id="demo-phone" dir="ltr" inputMode="tel" autoComplete="tel" required pattern="[0-9۰-۹٠-٩+() -]{8,20}" placeholder="شماره آزمایشی"/></div><div className="field checkout-wide"><label htmlFor="demo-address">نشانی</label><textarea id="demo-address" autoComplete="street-address" required placeholder="نشانی ساختگی برای نمایش فرم"/></div></div></section><section className="demo-card-fields"><h2>پرداخت آزمایشی</h2><div className="demo-warning-inline">فقط اطلاعات ساختگی وارد کنید. از اطلاعات کارت واقعی استفاده نکنید.</div><div className="checkout-fields"><div className="field checkout-wide"><label htmlFor="demo-card-name">نام دارنده کارت (آزمایشی)</label><input id="demo-card-name" autoComplete="off" required placeholder="نام نمونه"/></div><div className="field checkout-wide"><label htmlFor="demo-card-number">شماره کارت آزمایشی</label><input id="demo-card-number" dir="ltr" inputMode="numeric" autoComplete="off" required minLength={16} maxLength={19} pattern="[0-9 ]{16,19}" placeholder="0000 0000 0000 0000"/></div><div className="field"><label htmlFor="demo-expiry">تاریخ انقضای ساختگی</label><input id="demo-expiry" dir="ltr" autoComplete="off" required placeholder="MM/YY" pattern="[0-9]{2}/[0-9]{2}" maxLength={5}/></div><div className="field"><label htmlFor="demo-cvv">CVV ساختگی</label><input id="demo-cvv" dir="ltr" inputMode="numeric" autoComplete="off" required placeholder="000" minLength={3} maxLength={4} pattern="[0-9]{3,4}"/></div></div><button className="btn shop-full" disabled={busy}>{busy ? "در حال شبیه‌سازی…" : "Pay · پرداخت آزمایشی"}</button><button className="btn light shop-full" disabled={busy} type="button" onClick={e => { const form = e.currentTarget.form; if (form?.reportValidity()) completePayment(true); }}>شبیه‌سازی پرداخت ناموفق</button></section></form><aside className="shop-summary"><span className="eyebrow">خلاصه سفارش</span>{items.length ? items.map(item => <div className="checkout-line" key={item.id}><span>{item.title} × {(item.quantity ?? 1).toLocaleString("en-US")}</span><b>{formatTomans(item.priceRials * (item.quantity ?? 1))}</b></div>) : <p className="muted">کالای نمونه آزمایشی</p>}<div className="checkout-line"><span>جمع جزء</span><b>{formatTomans(subtotal)} تومان</b></div><div className="checkout-line"><span>هزینه ارسال</span><b>رایگان</b></div><div className="shop-grand-total"><span>مجموع نمایشی</span><b>{formatTomans(total)} تومان</b></div><p className="muted shop-summary-note">دمو هیچ درگاه پرداختی را فراخوانی نمی‌کند.</p></aside></div></>}
-  </main>;
+  const subtotal = items.reduce((sum, item) => sum + item.priceRials * (item.quantity ?? 1), 0);
+  const total = subtotal;
+
+  async function completePayment(fail = false, customerName = "") {
+    setBusy(true);
+    setError("");
+    if (!fail && linkToIntake) {
+      if (!mockMode) {
+        setError("ثبت سفارش آزمایشی فقط در محیط توسعه فعال است. برای خرید از مسیر «سفارش واقعی» استفاده کنید.");
+        setBusy(false);
+        return;
+      }
+      if (!items.length) {
+        setError("سبد خرید خالی است. ابتدا یک برنامه به سبد اضافه کنید.");
+        setBusy(false);
+        return;
+      }
+      try {
+        const response = await fetch("/api/demo/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: customerName, items: items.map(item => ({ packageId: item.id, quantity: item.quantity ?? 1 })) }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          if (response.status === 401) {
+            window.location.assign(`/login?next=${encodeURIComponent("/checkout")}`);
+            return;
+          }
+          throw new Error(result.error || "ثبت سفارش آزمایشی ناموفق بود.");
+        }
+        if (result.demo !== true || typeof result.url !== "string" || !result.url.startsWith("/dashboard/requests/new?request=")) {
+          throw new Error("پاسخ پرداخت آزمایشی معتبر نیست.");
+        }
+        sessionStorage.removeItem(CART_KEY);
+        window.dispatchEvent(new Event("fitpro-cart-change"));
+        window.location.assign(result.url);
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
+        setBusy(false);
+      }
+      return;
+    }
+    window.setTimeout(() => {
+      const now = new Date();
+      const id = `DEMO-${now.getTime().toString().slice(-8)}`;
+      const receipt: DemoReceipt = {
+        id,
+        status: fail ? "failed" : "success",
+        amountRials: total,
+        createdAt: now.toISOString(),
+        items: items.length
+          ? items.map(item => ({ id: item.id, title: item.title, quantity: item.quantity ?? 1, priceRials: item.priceRials }))
+          : [{ id: "demo-product", title: "کالای آزمایشی", quantity: 1, priceRials: 0 }],
+      };
+      try {
+        sessionStorage.setItem(`${DEMO_RECEIPT_PREFIX}${id}`, JSON.stringify(receipt));
+        if (!fail) {
+          sessionStorage.removeItem(CART_KEY);
+          window.dispatchEvent(new Event("fitpro-cart-change"));
+        }
+        window.location.assign(`/checkout/result?order=${encodeURIComponent(id)}`);
+      } catch {
+        setError("رسید آزمایشی در این مرورگر ذخیره نشد. لطفاً دوباره تلاش کنید.");
+        setBusy(false);
+      }
+    }, 450);
+  }
+
+  function pay(event: React.FormEvent<HTMLFormElement>) { event.preventDefault(); const data = new FormData(event.currentTarget); void completePayment(false, String(data.get("demo-name") ?? "").trim()); }
+  return <main className="container page shop-page" dir="rtl"><div className="demo-banner" role="note"><span>DEMO MODE</span><b>NO REAL MONEY TRANSFER</b></div>
+    <span className="eyebrow">تسویه‌حساب نمایشی</span><h1>اطلاعات سفارش</h1><p className="muted">برای تست فقط مقدارهای ساختگی وارد کنید. نام واردشده برای ثبت سفارش آزمایشی در حساب ذخیره می‌شود؛ شماره همراه، نشانی، شماره کارت، تاریخ و CVV ارسال یا ذخیره نمی‌شوند. در حالت توسعه، بعد از پرداخت نمایشی سفارش با وضعیت آزمایشی ساخته می‌شود و فرم اطلاعات برنامه باز خواهد شد.</p>
+    {error && <div className="alert" role="alert">{error}</div>}
+    <div className="checkout-layout"><form className="checkout-form" onSubmit={pay}><section><h2>اطلاعات مشتری و نشانی</h2><div className="checkout-fields"><div className="field"><label htmlFor="demo-name">نام و نام خانوادگی</label><input id="demo-name" name="demo-name" autoComplete="name" required minLength={3} maxLength={100} placeholder="نام نمایشی"/></div><div className="field"><label htmlFor="demo-phone">شماره همراه</label><input id="demo-phone" dir="ltr" inputMode="tel" autoComplete="tel" required pattern="[0-9۰-۹٠-٩+() -]{8,20}" placeholder="شماره آزمایشی"/></div><div className="field checkout-wide"><label htmlFor="demo-address">نشانی</label><textarea id="demo-address" autoComplete="street-address" required placeholder="نشانی ساختگی برای نمایش فرم"/></div></div></section><section className="demo-card-fields"><h2>پرداخت آزمایشی</h2><div className="demo-warning-inline">فقط اطلاعات ساختگی وارد کنید. از اطلاعات کارت واقعی استفاده نکنید.</div><div className="checkout-fields"><div className="field checkout-wide"><label htmlFor="demo-card-name">نام دارنده کارت (آزمایشی)</label><input id="demo-card-name" autoComplete="off" required placeholder="نام نمونه"/></div><div className="field checkout-wide"><label htmlFor="demo-card-number">شماره کارت آزمایشی</label><input id="demo-card-number" dir="ltr" inputMode="numeric" autoComplete="off" required minLength={16} maxLength={19} pattern="[0-9 ]{16,19}" placeholder="0000 0000 0000 0000"/></div><div className="field"><label htmlFor="demo-expiry-month">ماه انقضا (ساختگی)</label><input id="demo-expiry-month" dir="ltr" inputMode="numeric" autoComplete="off" required maxLength={2} pattern="0[1-9]|1[0-2]" placeholder="MM" title="ماه را بین 01 و 12 وارد کنید"/></div><div className="field"><label htmlFor="demo-expiry-year">سال انقضا (ساختگی)</label><input id="demo-expiry-year" dir="ltr" inputMode="numeric" autoComplete="off" required minLength={4} maxLength={4} pattern="[0-9]{4}" placeholder="YYYY" title="سال را با 4 رقم وارد کنید"/></div><div className="field checkout-wide"><label htmlFor="demo-cvv">CVV ساختگی</label><input id="demo-cvv" dir="ltr" inputMode="numeric" autoComplete="off" required placeholder="000" minLength={3} maxLength={4} pattern="[0-9]{3,4}"/></div></div><button className="btn shop-full" disabled={busy}>{busy ? "در حال شبیه‌سازی…" : "Pay · پرداخت آزمایشی"}</button><button className="btn light shop-full" disabled={busy} type="button" onClick={e => { const form = e.currentTarget.form; if (form?.reportValidity()) completePayment(true); }}>شبیه‌سازی پرداخت ناموفق</button></section></form><aside className="shop-summary"><span className="eyebrow">خلاصه سفارش</span>{items.length ? items.map(item => <div className="checkout-line" key={item.id}><span>{item.title} × {(item.quantity ?? 1).toLocaleString("en-US")}</span><b>{formatTomans(item.priceRials * (item.quantity ?? 1))}</b></div>) : <p className="muted">کالای نمونه آزمایشی</p>}<div className="checkout-line"><span>جمع جزء</span><b>{formatTomans(subtotal)} تومان</b></div><div className="checkout-line"><span>هزینه ارسال</span><b>رایگان</b></div><div className="shop-grand-total"><span>مجموع نمایشی</span><b>{formatTomans(total)} تومان</b></div><p className="muted shop-summary-note">دمو هیچ درگاه پرداختی را فراخوانی نمی‌کند.</p></aside></div>
+    </main>;
 }

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { Role } from "@/generated/prisma/client";
 import {canSendOtp,isOtpUsable,hasRole} from "@/lib/policies";
+import { encryptHealthData } from "@/lib/health-data";
 
 const pepper = () => {
   const value=process.env.SESSION_SECRET;
@@ -68,6 +69,33 @@ export function isOwnerAdmin(user: { phone: string; role: Role } | null | undefi
 export async function createDevOwnerSession() {
   if (process.env.NODE_ENV !== "development" || !process.env.ADMIN_PHONE) throw new Error("ورود آزمایشی فعال نیست.");
   const user = await db.user.upsert({ where: { phone: normalizePhone(process.env.ADMIN_PHONE) }, create: { phone: normalizePhone(process.env.ADMIN_PHONE), role: "ADMIN" }, update: { role: "ADMIN" } });
+  const token = randomBytes(32).toString("base64url");
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60_000);
+  await db.session.create({ data: { userId: user.id, tokenHash: hash(token), expiresAt } });
+  const jar = await cookies();
+  jar.set("fit_session", token, { httpOnly: true, secure: false, sameSite: "lax", path: "/", expires: expiresAt });
+  return user;
+}
+
+export async function createDevClientSession() {
+  if (process.env.NODE_ENV !== "development") throw new Error("Local preview is available only in development.");
+  const phone = "TEST-CLIENT-LOCAL";
+  const user = await db.user.upsert({ where: { phone }, create: { phone, name: "کاربر آزمایشی", role: "CLIENT" }, update: { name: "کاربر آزمایشی", role: "CLIENT" } });
+  const demoPackage = await db.coachingPackage.upsert({
+    where: { slug: "fit-pro-local-demo" },
+    create: { slug: "fit-pro-local-demo", title: "برنامهٔ تمرینی آزمایشی", description: "نمونهٔ محلی برای مشاهدهٔ پنل کاربری؛ این سفارش پرداخت واقعی ندارد.", durationDays: 30, priceRials: BigInt(5_000_000), requestType: "TRAINING", deliverables: ["برنامهٔ نمونه"], active: true, sortOrder: 9999 },
+    update: {},
+  });
+  const existingDemo = await db.coachingRequest.findFirst({ where: { userId: user.id, packageId: demoPackage.id, payments: { some: { status: "DEMO_PAID" } } } });
+  if (!existingDemo) {
+    await db.coachingRequest.create({
+      data: {
+        userId: user.id, packageId: demoPackage.id, requestType: "TRAINING", status: "IN_PROGRESS", healthConsent: false,
+        intake: encryptHealthData({ age: 28, height: 178, weight: 76, goal: "نمونهٔ نمایشی" }),
+        payments: { create: { amountRials: demoPackage.priceRials, status: "DEMO_PAID", orderRef: `DEMO-LOCAL-${randomBytes(6).toString("hex")}`, paidAt: new Date() } },
+      },
+    });
+  }
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60_000);
   await db.session.create({ data: { userId: user.id, tokenHash: hash(token), expiresAt } });

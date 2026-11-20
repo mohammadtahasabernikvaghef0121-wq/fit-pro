@@ -13,10 +13,10 @@ export async function POST(req: Request) {
   try {
     const data = schema.parse(await req.json());
     const request = await db.coachingRequest.findFirst({
-      where: { id: data.requestId, userId: user.id, status: "PAID", payments: { some: { status: "PAID" } } },
+      where: { id: data.requestId, userId: user.id, status: "PAID", payments: { some: { status: { in: ["PAID", "DEMO_PAID"] } } } },
       select: { id: true },
     });
-    if (!request) return NextResponse.json({ error: "ذخیره اطلاعات فقط پس از تأیید پرداخت ممکن است." }, { status: 402 });
+    if (!request) return NextResponse.json({ error: "پرداخت این سفارش تکمیل نشده است. ابتدا پرداخت را انجام دهید." }, { status: 402 });
     await db.coachingRequest.update({ where: { id: request.id }, data: { intake: encryptHealthData(data.intake), healthConsent: true } });
     return NextResponse.json({ id: request.id });
   } catch (error) {

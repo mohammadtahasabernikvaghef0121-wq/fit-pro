@@ -6,6 +6,7 @@ import OrderCheckout from "@/components/order-checkout";
 import RequestForm from "@/components/request-form";
 
 export const metadata = { title: "ثبت سفارش برنامه", robots: { index: false, follow: false } };
+const mockMode = process.env.NODE_ENV === "development" && process.env.PAYMENT_MODE === "mock";
 
 export default async function NewRequest({ searchParams }: { searchParams: Promise<{ package?: string; request?: string }> }) {
   const user = await currentUser();
@@ -19,12 +20,12 @@ export default async function NewRequest({ searchParams }: { searchParams: Promi
     });
     if (!request) redirect("/dashboard");
 
-    const hasPaid = request.payments.some(payment => payment.status === "PAID");
+    const hasPaid = request.payments.some(payment => payment.status === "PAID" || payment.status === "DEMO_PAID");
     if (request.status === "PAID" && hasPaid) {
-      return <main className="container page"><span className="eyebrow">مرحله دوم · اطلاعات برنامه</span><h1>اطلاعات لازم برای برنامه‌تان</h1><RequestForm requestId={request.id} packageId={request.packageId} title={request.package.title} initial={decryptHealthData(request.intake)} /></main>;
+      return <main className="container page"><span className="eyebrow">مرحله دوم · اطلاعات برنامه</span><h1>اطلاعات لازم برای برنامه‌تان</h1><RequestForm requestId={request.id} packageId={request.packageId} title={request.package.title} initial={decryptHealthData(request.intake)} demoPayment={request.payments.some(payment => payment.status === "DEMO_PAID")} /></main>;
     }
     if (request.status === "NEW" && !hasPaid) {
-      return <main className="container page"><h1>ادامه پرداخت سفارش</h1><OrderCheckout packageId={request.packageId} title={request.package.title} priceRials={Number(request.package.priceRials)} customerName={user.name ?? ""} phone={user.phone} requestId={request.id} /></main>;
+      return <main className="container page"><h1>ادامه پرداخت سفارش</h1><OrderCheckout packageId={request.packageId} title={request.package.title} priceRials={Number(request.package.priceRials)} customerName={user.name ?? ""} phone={user.phone} requestId={request.id} mockMode={mockMode} /></main>;
     }
     redirect("/dashboard");
   }
@@ -35,6 +36,6 @@ export default async function NewRequest({ searchParams }: { searchParams: Promi
   return <main className="container page">
     <span className="eyebrow">مرحله اول · پرداخت</span>
     <h1>ثبت سفارش برنامه</h1>
-    <OrderCheckout packageId={pkg.id} title={pkg.title} priceRials={Number(pkg.priceRials)} customerName={user.name ?? ""} phone={user.phone} />
+    <OrderCheckout packageId={pkg.id} title={pkg.title} priceRials={Number(pkg.priceRials)} customerName={user.name ?? ""} phone={user.phone} mockMode={mockMode} />
   </main>;
 }

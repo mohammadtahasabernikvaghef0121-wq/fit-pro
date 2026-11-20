@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import LoginForm from "@/components/login-form";
 import DevAdminLogin from "@/components/dev-admin-login";
+import DevClientLogin from "@/components/dev-client-login";
 
 export default function Login() {
   return <main className="login-page" dir="rtl">
@@ -13,7 +14,7 @@ export default function Login() {
       <Suspense fallback={<div className="login-loading" role="status">در حال آماده‌سازی فرم ورود…</div>}>
         <div className="login-card">
           <LoginForm />
-          {process.env.NODE_ENV === "development" && <DevAdminLogin />}
+          {process.env.NODE_ENV === "development" && <><DevAdminLogin /><DevClientLogin /></>}
         </div>
       </Suspense>
     </section>

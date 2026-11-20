@@ -46,6 +46,7 @@ export async function GET(req: Request) {
   try {
     const payment = await db.payment.findUnique({ where: { trackId } });
     if (!payment) return NextResponse.redirect(new URL("/payment/result?status=failed", url.origin));
+    if (payment.status === "DEMO_PAID") return NextResponse.redirect(new URL(`/dashboard/requests/new?request=${encodeURIComponent(payment.requestId)}`, url.origin));
     if (payment.status !== "PAID") {
       const verified = await verifyZibalPayment(trackId);
       if (isVerifiedPayment(Number(verified.result), Number(verified.amount), Number(payment.amountRials))) {
@@ -58,8 +59,11 @@ export async function GET(req: Request) {
       }
     }
     const latest = await db.payment.findUnique({ where: { id: payment.id }, select: { status: true } });
-    if (latest?.status === "PAID") await notifyPaymentOnce(payment.id);
-    const status = latest?.status === "PAID" ? "success" : latest?.status === "PENDING" ? "pending" : "failed";
+    if (latest?.status === "PAID") {
+      await notifyPaymentOnce(payment.id);
+      return NextResponse.redirect(new URL(`/dashboard/requests/new?request=${encodeURIComponent(payment.requestId)}`, url.origin));
+    }
+    const status = latest?.status === "PENDING" ? "pending" : "failed";
     return NextResponse.redirect(new URL(`/payment/result?status=${status}&request=${payment.requestId}`, url.origin));
   } catch {
     return NextResponse.redirect(new URL("/payment/result?status=pending", url.origin));

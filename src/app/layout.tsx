@@ -3,6 +3,7 @@ import "./globals.css";
 import { SiteHeader, SiteFooter } from "@/components/site";
 import { siteConfig } from "@/lib/config";
 import SiteAnalytics from "@/components/site-analytics";
+import MotionEnhancer from "@/components/motion-enhancer";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -19,5 +20,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="fa" dir="rtl"><body><SiteAnalytics /><SiteHeader />{children}<SiteFooter /></body></html>;
+  return <html lang="fa" dir="rtl"><body><SiteAnalytics /><MotionEnhancer /><SiteHeader />{children}<SiteFooter /></body></html>;
 }

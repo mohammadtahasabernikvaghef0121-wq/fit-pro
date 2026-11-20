@@ -31,6 +31,7 @@ enum RequestStatus {
 enum PaymentStatus {
   PENDING
   PAID
+  DEMO_PAID
   FAILED
   REFUNDED
 }

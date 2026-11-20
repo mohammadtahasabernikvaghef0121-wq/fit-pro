@@ -21,7 +21,7 @@ const choices: Record<string, string[]> = {
   equipment: ["باشگاه کامل", "دمبل و کش در منزل", "وزن بدن", "امکانات دیگر"],
 };
 
-export default function RequestForm({ requestId, packageId, title, initial }: { requestId: string; packageId: string; title: string; initial: Record<string, unknown> }) {
+export default function RequestForm({ requestId, packageId, title, initial, demoPayment = false }: { requestId: string; packageId: string; title: string; initial: Record<string, unknown>; demoPayment?: boolean }) {
   const router = useRouter();
   const [values, setValues] = useState<Intake>({ ...blank, ...(initial as Intake) });
   const [busy, setBusy] = useState(false);
@@ -52,8 +52,8 @@ export default function RequestForm({ requestId, packageId, title, initial }: { 
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "ثبت اطلاعات انجام نشد.");
-      setMessage(result.telegramSent ? "اطلاعات ثبت شد و برای مربی ارسال شد." : "اطلاعات ثبت شد؛ اعلان تلگرام ارسال نشد.");
-      window.setTimeout(() => router.push("/dashboard"), 1200);
+      setMessage(result.demoPayment ? "اطلاعات آزمایشی ثبت شد." : result.telegramSent ? "اطلاعات ثبت شد و برای مربی ارسال شد." : "اطلاعات ثبت شد؛ اعلان تلگرام ارسال نشد.");
+      window.setTimeout(() => router.replace("/dashboard"), 600);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "ثبت اطلاعات با خطا روبه‌رو شد.");
     } finally {
@@ -63,7 +63,7 @@ export default function RequestForm({ requestId, packageId, title, initial }: { 
 
   return <form className="form request-intake-form" style={{ maxWidth: 780 }} onSubmit={submit}>
     <h2>{title}</h2>
-    <p className="muted">پرداخت سفارش تأیید شده است. اطلاعات این فرم برای تنظیم برنامه دریافت می‌شود و رمزگذاری‌شده ذخیره خواهد شد.</p>
+    <div className={`request-payment-status${demoPayment ? " demo" : ""}`}><span>وضعیت پرداخت</span><strong>{demoPayment ? "آزمایشی · بدون انتقال وجه" : "تأییدشده"}</strong></div>
     {message && <div className="alert" role="status">{message}</div>}
     <div className="grid3">{input("age", "مثلاً 30", "number")}{input("height", "مثلاً 170", "number")}{input("weight", "مثلاً 70", "number")}</div>
     {input("goal", "مثلاً افزایش توان و ایجاد نظم در تمرین")}

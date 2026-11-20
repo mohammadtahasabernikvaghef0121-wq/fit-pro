@@ -25,7 +25,7 @@ export async function POST(req: Request) {
         where: { id: data.requestId, userId: user.id, packageId: pkg.id, status: "NEW" },
         include: { payments: true },
       });
-      if (!request || request.payments.some(payment => payment.status === "PAID")) {
+      if (!request || request.payments.some(payment => payment.status === "PAID" || payment.status === "DEMO_PAID")) {
         return NextResponse.json({ error: "سفارش برای پرداخت دوباره در دسترس نیست." }, { status: 409 });
       }
       await db.user.update({ where: { id: user.id }, data: { name: data.name } });

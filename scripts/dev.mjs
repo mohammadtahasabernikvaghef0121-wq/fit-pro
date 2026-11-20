@@ -5,17 +5,18 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 await mkdir(path.join(root, ".data"), { recursive: true });
+const databasePath = process.env.FIT_PRO_DB_PATH?.trim() || ".data/fit-pro-postgres-test";
 
 const server = spawn(
   process.execPath,
   [
     path.join(root, "node_modules", "@electric-sql", "pglite-socket", "dist", "scripts", "server.js"),
-    "--db=.data/fit-pro-postgres",
+    `--db=${databasePath}`,
     "--port=51214",
     "--host=127.0.0.1",
     "--max-connections=10",
     "--run",
-    "node node_modules/next/dist/bin/next dev",
+    "node scripts/dev-stack.mjs",
     "--include-database-url",
   ],
   { cwd: root, stdio: "inherit", env: process.env },

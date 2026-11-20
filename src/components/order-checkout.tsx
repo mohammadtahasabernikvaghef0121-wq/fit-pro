@@ -10,6 +10,7 @@ export default function OrderCheckout({
   customerName,
   phone,
   requestId,
+  mockMode = false,
 }: {
   packageId: string;
   title: string;
@@ -17,6 +18,7 @@ export default function OrderCheckout({
   customerName: string;
   phone: string;
   requestId?: string;
+  mockMode?: boolean;
 }) {
   const [name, setName] = useState(customerName);
   const [busy, setBusy] = useState(false);
@@ -53,6 +55,7 @@ export default function OrderCheckout({
     <form className="form order-checkout" onSubmit={startPayment}>
       <span className="eyebrow">مرحله اول · پرداخت</span>
       <h2>{title}</h2>
+      {mockMode && <div className="demo-warning-inline" role="note"><b>درگاه آزمایشی فعال است</b><br/>هیچ پولی منتقل نمی‌شود. پس از شبیه‌سازی موفق، فرم اطلاعات برنامه برای تست باز خواهد شد.</div>}
       <p className="muted">پس از تأیید پرداخت، فرم اطلاعات لازم برای تنظیم برنامه در پنل شما باز می‌شود.</p>
       <div className="shop-total"><span>مبلغ</span><b>{formatTomans(priceRials)} تومان</b></div>
       <div className="field">
@@ -61,7 +64,7 @@ export default function OrderCheckout({
       </div>
       <p className="muted">شماره تماس حساب شما: <b dir="ltr">{phone}</b></p>
       {message && <div className="alert" role="alert">{message}</div>}
-      <button className="btn shop-full" disabled={busy}>{busy ? "در حال انتقال به درگاه…" : "پرداخت و ادامه"}</button>
+      <button className="btn shop-full" disabled={busy}>{busy ? mockMode ? "در حال ثبت نتیجهٔ آزمایشی…" : "در حال انتقال به درگاه…" : mockMode ? "شبیه‌سازی پرداخت و ادامه" : "پرداخت و ادامه"}</button>
       <p className="muted" style={{ fontSize: 12 }}>قد، وزن و سایر اطلاعات بدنی قبل از پرداخت درخواست یا ذخیره نمی‌شوند.</p>
     </form>
   );

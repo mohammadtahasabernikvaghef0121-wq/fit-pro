@@ -16,11 +16,11 @@ export async function POST(req: Request) {
 
     const request = await db.coachingRequest.findFirst({
       where: { id: data.requestId, userId: user.id },
-      include: { package: true, payments: { where: { status: "PAID" }, take: 1 } },
+      include: { package: true, payments: { where: { status: { in: ["PAID", "DEMO_PAID"] } }, orderBy: { createdAt: "desc" }, take: 1 } },
     });
     if (!request) return NextResponse.json({ error: "سفارش پیدا نشد." }, { status: 404 });
     if (request.status !== "PAID" || request.payments.length === 0) {
-      return NextResponse.json({ error: "فرم اطلاعات فقط پس از تأیید پرداخت باز می‌شود." }, { status: 402 });
+      return NextResponse.json({ error: "پرداخت این سفارش تکمیل نشده است. ابتدا پرداخت را انجام دهید." }, { status: 402 });
     }
     if (request.packageId !== data.packageId) return NextResponse.json({ error: "برنامه‌ی انتخاب‌شده با سفارش هم‌خوانی ندارد." }, { status: 400 });
 
@@ -31,12 +31,15 @@ export async function POST(req: Request) {
     if (!saved.count) return NextResponse.json({ error: "اطلاعات این سفارش قبلاً ثبت شده است." }, { status: 409 });
 
     let telegramSent = false;
-    try {
-      telegramSent = await sendRequestToTelegram({ requestId: request.id, phone: user.phone, packageName: request.package.title, intake: data });
-    } catch (error) {
-      console.error("Telegram request notification failed", error);
+    const demoPayment = request.payments.some(payment => payment.status === "DEMO_PAID");
+    if (!demoPayment) {
+      try {
+        telegramSent = await sendRequestToTelegram({ requestId: request.id, phone: user.phone, packageName: request.package.title, intake: data });
+      } catch (error) {
+        console.error("Telegram request notification failed", error);
+      }
     }
-    return NextResponse.json({ id: request.id, telegramSent });
+    return NextResponse.json({ id: request.id, telegramSent, demoPayment });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: "اطلاعات فرم را بررسی کنید." }, { status: 400 });
     console.error("Could not save paid customer intake", error);

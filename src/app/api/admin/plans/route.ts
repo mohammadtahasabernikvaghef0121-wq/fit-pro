@@ -13,7 +13,7 @@ export async function POST(req:Request){
   if(!requestId||title.length<2||title.length>120||!(file instanceof File))return NextResponse.json({error:"اطلاعات فایل کامل نیست."},{status:400});
   if(file.size>10*1024*1024||file.type!=="application/pdf")return NextResponse.json({error:"فقط فایل PDF تا حداکثر 10 مگابایت پذیرفته می‌شود."},{status:400});
   const data=Buffer.from(await file.arrayBuffer());if(data.subarray(0,5).toString("ascii")!=="%PDF-")return NextResponse.json({error:"محتوای فایل PDF معتبر نیست."},{status:400});
-  const request=await db.coachingRequest.findUnique({where:{id:requestId},include:{payments:true}});if(!request||!request.payments.some(p=>p.status==="PAID"))return NextResponse.json({error:"درخواست پرداخت‌شده‌ای با این شناسه پیدا نشد."},{status:404});
+  const request=await db.coachingRequest.findUnique({where:{id:requestId},include:{payments:true}});if(!request||!request.payments.some(p=>p.status==="PAID"||p.status==="DEMO_PAID"))return NextResponse.json({error:"درخواست پرداخت‌شده‌ای با این شناسه پیدا نشد."},{status:404});
   const storageKey=`${randomUUID()}.pdf`;const dir=path.join(process.cwd(),".data","plans");await mkdir(dir,{recursive:true});await writeFile(path.join(dir,storageKey),data,{flag:"wx",mode:0o600});
   await db.$transaction(async tx=>{await tx.deliveredPlan.create({data:{requestId,title,storageKey,mimeType:"application/pdf",sizeBytes:data.length}});await tx.coachingRequest.update({where:{id:requestId},data:{status:"DELIVERED"}})});
   return NextResponse.json({ok:true});
