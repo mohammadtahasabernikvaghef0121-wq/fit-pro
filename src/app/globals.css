@@ -24,7 +24,7 @@
 
 /* Responsive safeguards shared by all routes. */
 html{scroll-padding-top:1rem;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{min-width:320px;width:100%;overflow-x:clip}
+body{width:100%;overflow-x:hidden;overflow-x:clip}
 img,video,canvas,svg{max-width:100%}
 img,video{height:auto}
 main,section,article,aside,.container,.dashboard,.hero,.grid3,.steps,.stats,.checkout-layout,.shop-layout,.table-wrap{min-width:0}
@@ -389,4 +389,20 @@ dialog[open],[role="dialog"][data-state="open"],[role="alertdialog"][data-state=
   .user-progress-ring-value{animation:none!important;stroke-dashoffset:var(--ring-target-offset)}
   .recharts-line-curve,.recharts-area-curve,path[data-motion-draw="true"]{animation:none!important;stroke-dashoffset:0}
   .card:hover,.shop-card:hover,.payment-detail-card:hover,.user-program-card:hover,.admin-package:hover,.user-metric:hover,.admin-metric:hover{transform:none}
+}
+
+/* Consistent box sizing and mobile text rendering across browser engines. */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+/* Use the traditional viewport unit first, then the small viewport when available. */
+.login-page{min-height:calc(100vh - 76px);min-height:calc(100svh - 76px)}
+.user-dashboard{min-height:calc(100vh - 76px);min-height:calc(100svh - 76px)}
+.user-side{height:calc(100vh - 76px);height:calc(100svh - 76px)}
+@media(max-width:700px){.user-dashboard{min-height:calc(100vh - 64px);min-height:calc(100svh - 64px)}.user-side{height:auto}}
+@media(max-width:520px){.login-page{min-height:calc(100vh - 64px);min-height:calc(100svh - 64px)}}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto!important}
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }

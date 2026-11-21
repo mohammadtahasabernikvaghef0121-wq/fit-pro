@@ -1,0 +1,78 @@
+.overlay {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: max(20px, env(safe-area-inset-top))
+    max(20px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+  background: rgb(28 13 15 / 52%);
+  animation: overlay-in 180ms ease-out both;
+}
+
+.card {
+  position: relative;
+  width: min(100%, 480px);
+  padding: 46px 30px 34px;
+  border: 1px solid #eadfe0;
+  border-radius: 22px;
+  background: #fff;
+  color: #3e171b;
+  box-shadow: 0 24px 80px rgb(30 12 15 / 22%);
+  text-align: center;
+  animation: card-in 220ms cubic-bezier(.2, .75, .25, 1) both;
+}
+
+.card p {
+  margin: 0;
+  font-family: "Vazirmatn Variable", Vazirmatn, sans-serif;
+  font-size: clamp(17px, 4vw, 22px);
+  font-weight: 750;
+  line-height: 1.9;
+}
+
+.close {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #70595c;
+  font: inherit;
+  font-size: 27px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.close:hover {
+  background: #fff5dc;
+  color: #7a0d1a;
+}
+
+.close:focus-visible {
+  outline: 3px solid #e0a91f;
+  outline-offset: 2px;
+}
+
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .card { animation: none; }
+}

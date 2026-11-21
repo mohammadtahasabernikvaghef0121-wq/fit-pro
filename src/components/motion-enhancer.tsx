@@ -22,7 +22,17 @@ const revealSelector = [
 export default function MotionEnhancer() {
   useEffect(() => {
     const header = document.querySelector<HTMLElement>(".site-header");
+    const revealTimers = new Map<Element, number>();
     let scrollFrame = 0;
+
+    const reveal = (element: Element) => {
+      (element as HTMLElement).dataset.motionReveal = "visible";
+      const timer = revealTimers.get(element);
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+        revealTimers.delete(element);
+      }
+    };
 
     const updateHeader = () => {
       if (scrollFrame) return;
@@ -45,7 +55,7 @@ export default function MotionEnhancer() {
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
-        (entry.target as HTMLElement).dataset.motionReveal = "visible";
+        reveal(entry.target);
         observer.unobserve(entry.target);
       }
     }, { threshold: 0.08, rootMargin: "0px 0px -32px 0px" });
@@ -56,9 +66,12 @@ export default function MotionEnhancer() {
     };
 
     const observe = (element: Element) => {
-      if (element.hasAttribute("data-motion-reveal")) return;
+      if ((element as HTMLElement).dataset.motionReveal === "visible") return;
+      const existingTimer = revealTimers.get(element);
+      if (existingTimer !== undefined) window.clearTimeout(existingTimer);
       (element as HTMLElement).dataset.motionReveal = "pending";
       observer.observe(element);
+      revealTimers.set(element, window.setTimeout(() => reveal(element), 1200));
     };
 
     document.documentElement.dataset.motionReady = "true";
@@ -77,6 +90,8 @@ export default function MotionEnhancer() {
       if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
       mutations.disconnect();
       observer.disconnect();
+      revealTimers.forEach((timer) => window.clearTimeout(timer));
+      revealTimers.clear();
       delete document.documentElement.dataset.motionReady;
     };
   }, []);

@@ -18,7 +18,7 @@ const money = (value: number) => `${number(value)} تومان`;
 const date = (value: string) => new Intl.DateTimeFormat("fa-IR-u-ca-persian-nu-latn", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date(value));
 
 export default function AdminDashboard({ initialView }: { initialView: View }) {
-  const [view, setView] = useState<View>(initialView);
+  const view = initialView;
   const [range, setRange] = useState<RangeKey>("30d");
   const [data, setData] = useState<DashboardData>(emptyData);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,11 @@ export default function AdminDashboard({ initialView }: { initialView: View }) {
     finally { setLoading(false); }
   }, [range]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => { if (active) void load(); });
+    return () => { active = false; };
+  }, [load]);
   const filteredRequests = useMemo(() => data.requests.filter((item) => `${item.name} ${item.phone} ${item.package} ${item.id}`.toLowerCase().includes(query.toLowerCase())), [data.requests, query]);
   const filteredPayments = useMemo(() => data.payments.filter((item) => `${item.name} ${item.phone} ${item.package} ${item.orderRef}`.toLowerCase().includes(query.toLowerCase())), [data.payments, query]);
 

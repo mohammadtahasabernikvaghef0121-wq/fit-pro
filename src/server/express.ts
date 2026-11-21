@@ -118,6 +118,7 @@ app.get("/metrics", requireOwner, async (req, res, next) => {
 });
 
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  void _next;
   console.error("Admin API error", error);
   res.status(500).json({ error: "دریافت اطلاعات پنل انجام نشد." });
 });

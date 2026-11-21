@@ -7,6 +7,7 @@
   isolation: isolate;
   display: grid;
   place-items: center;
+  min-height: calc(100vh - 76px);
   min-height: calc(100svh - 76px);
   overflow: hidden;
   padding: clamp(22px, 4vw, 48px) 20px;
@@ -45,6 +46,13 @@
 .unitToggle .unitActive { color: #251c07; background: #e0a91f; box-shadow: 0 2px 12px #e0a91f30; font-weight: 800; }
 .unitToggle .unitActive small { color: inherit; }
 .unitToggle button:focus-visible { outline: 2px solid #e0a91f; outline-offset: 2px; }
+.demographicFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: 20px; }
+.demographicField { display: grid; align-content: start; justify-items: start; gap: 8px; min-width: 0; }
+.demographicField > label { color: #f5f3f7; font-size: 13px; font-weight: 700; }
+.demographicField .numberBox { width: 100%; max-width: 126px; min-height: 42px; }
+.demographicField select { width: 100%; min-width: 0; min-height: 42px; padding: 7px 10px; border: 1px solid #ffffff1d; border-radius: 11px; outline: none; color: #fff; background: #211d23; font: inherit; font-size: 12px; }
+.demographicField select:focus-visible { border-color: #a9f66b; outline: 2px solid #a9f66b66; outline-offset: 2px; }
+.demographicField small { color: #96909b; font-size: 10px; line-height: 1.7; }
 .field { padding-top: 23px; }
 .entered .field { animation: bmi-fade-up .3s ease both; }
 .fieldTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
@@ -119,7 +127,7 @@
 }
 
 @media (max-width: 680px) {
-  .page { min-height: calc(100svh - 64px); padding: 22px 13px; }
+  .page { min-height: calc(100vh - 64px); min-height: calc(100svh - 64px); padding: 22px 13px; }
   .shell { padding: 20px 16px; border-radius: 23px; }
   .grid { grid-template-columns: 1fr; gap: 13px; }
   .inputCard, .resultCard { border-radius: 18px; }

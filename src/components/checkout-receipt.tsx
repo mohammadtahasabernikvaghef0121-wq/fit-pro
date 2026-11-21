@@ -18,12 +18,15 @@ export default function CheckoutReceipt({ orderId }: { orderId: string }) {
 
   useEffect(() => {
     if (!orderId) return;
+    let nextReceipt: DemoReceipt | null = null;
     try {
       const stored = sessionStorage.getItem(`${DEMO_RECEIPT_PREFIX}${orderId}`);
-      if (stored) setReceipt(JSON.parse(stored) as DemoReceipt);
+      if (stored) nextReceipt = JSON.parse(stored) as DemoReceipt;
     } catch {
-      setReceipt(null);
+      nextReceipt = null;
     }
+    const timeout = window.setTimeout(() => setReceipt(nextReceipt), 0);
+    return () => window.clearTimeout(timeout);
   }, [orderId]);
 
   const success = receipt?.status === "success";

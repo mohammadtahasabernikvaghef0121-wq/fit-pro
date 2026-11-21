@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatTomans } from "@/lib/money";
 import { DEMO_RECEIPT_PREFIX, type DemoReceipt } from "@/lib/demo-receipt";
@@ -51,6 +52,7 @@ export function DemoPayment() {
 }
 
 export function DemoCheckoutFlow({ linkToIntake = false, mockMode = false }: { linkToIntake?: boolean; mockMode?: boolean }) {
+  const router = useRouter();
   const [items, setItems] = useState<ShopProduct[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -81,7 +83,7 @@ export function DemoCheckoutFlow({ linkToIntake = false, mockMode = false }: { l
         const result = await response.json();
         if (!response.ok) {
           if (response.status === 401) {
-            window.location.assign(`/login?next=${encodeURIComponent("/checkout")}`);
+            router.push(`/login?next=${encodeURIComponent("/checkout")}`);
             return;
           }
           throw new Error(result.error || "ثبت سفارش آزمایشی ناموفق بود.");
@@ -91,7 +93,7 @@ export function DemoCheckoutFlow({ linkToIntake = false, mockMode = false }: { l
         }
         sessionStorage.removeItem(CART_KEY);
         window.dispatchEvent(new Event("fitpro-cart-change"));
-        window.location.assign(result.url);
+        router.push(result.url);
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.");
         setBusy(false);
@@ -116,7 +118,7 @@ export function DemoCheckoutFlow({ linkToIntake = false, mockMode = false }: { l
           sessionStorage.removeItem(CART_KEY);
           window.dispatchEvent(new Event("fitpro-cart-change"));
         }
-        window.location.assign(`/checkout/result?order=${encodeURIComponent(id)}`);
+        router.push(`/checkout/result?order=${encodeURIComponent(id)}`);
       } catch {
         setError("رسید آزمایشی در این مرورگر ذخیره نشد. لطفاً دوباره تلاش کنید.");
         setBusy(false);

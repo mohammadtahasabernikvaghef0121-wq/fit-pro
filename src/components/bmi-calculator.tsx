@@ -21,6 +21,8 @@ const markers = [
 export default function BmiCalculator() {
   const [heightValue, setHeightValue] = useState("175");
   const [weightValue, setWeightValue] = useState("72");
+  const [ageValue, setAgeValue] = useState("25");
+  const [gender, setGender] = useState("");
   const [units, setUnits] = useState<"metric" | "imperial">("metric");
   const [entered, setEntered] = useState(false);
   useEffect(() => {
@@ -35,12 +37,14 @@ export default function BmiCalculator() {
   const weightMax = metric ? 300 : 661.3;
   const displayHeight = Number(heightValue);
   const displayWeight = Number(weightValue);
+  const displayAge = Number(ageValue);
+  const validAge = ageValue.trim() !== "" && Number.isInteger(displayAge) && displayAge >= 15 && displayAge <= 120;
   const hasHeight = heightValue.trim() !== "" && Number.isFinite(displayHeight);
   const hasWeight = weightValue.trim() !== "" && Number.isFinite(displayWeight);
   const heightCm = metric ? displayHeight : displayHeight * 2.54;
   const weightKg = metric ? displayWeight : displayWeight / 2.2046226218;
   const validationError = validateBmiInput(heightCm, weightKg);
-  const result = useMemo(() => calculateBmi(heightCm, weightKg), [heightCm, weightKg]);
+  const result = useMemo(() => validAge ? calculateBmi(heightCm, weightKg) : null, [heightCm, weightKg, validAge]);
   const category = result ? categoryCopy[result.category] : null;
   const progress = result ? Math.min(Math.max((result.value / 40) * 100, 0), 100) : 0;
 
@@ -67,7 +71,7 @@ export default function BmiCalculator() {
           </div>
           <span className={styles.kicker}><span /> BMI CALCULATOR</span>
           <h1 id="bmi-title">شاخص توده بدنی <em>BMI</em></h1>
-          <p>برای بزرگسالان 20 سال به بالا؛ با وارد کردن قد و وزن، شاخص توده بدنی خود را ببینید.</p>
+          <p>سن، قد و وزن خود را وارد کنید تا شاخص توده بدنی‌تان را ببینید.</p>
         </div>
 
         <div className={styles.grid}>
@@ -82,6 +86,29 @@ export default function BmiCalculator() {
               <div className={styles.unitToggle} role="group" aria-label="واحد اندازه‌گیری">
                 <button type="button" aria-pressed={metric} className={metric ? styles.unitActive : ""} onClick={() => changeUnits("metric")}>متریک <small>cm / kg</small></button>
                 <button type="button" aria-pressed={!metric} className={!metric ? styles.unitActive : ""} onClick={() => changeUnits("imperial")}>امپریال <small>in / lb</small></button>
+              </div>
+            </div>
+
+            <div className={styles.demographicFields}>
+              <div className={styles.demographicField}>
+                <label htmlFor="bmi-age">سن</label>
+                <div className={styles.numberBox}>
+                  <input id="bmi-age" type="number" min="15" max="120" step="1" value={ageValue}
+                    onFocus={() => { if (ageValue === "25") setAgeValue(""); }}
+                    onChange={(event) => setAgeValue(event.currentTarget.value)} aria-describedby="age-help" />
+                  <span>سال</span>
+                </div>
+                <small id="age-help">محدوده مجاز: 15 تا 120 سال</small>
+              </div>
+              <div className={styles.demographicField}>
+                <label htmlFor="bmi-gender">جنسیت</label>
+                <select id="bmi-gender" value={gender} onChange={(event) => setGender(event.currentTarget.value)}>
+                  <option value="">انتخاب کنید</option>
+                  <option value="female">زن</option>
+                  <option value="male">مرد</option>
+                  <option value="unspecified">ترجیح می‌دهم نگویم</option>
+                </select>
+                <small>در محاسبه BMI بزرگسالان اثر ندارد</small>
               </div>
             </div>
 
@@ -127,6 +154,7 @@ export default function BmiCalculator() {
               <span className={styles.scoreUnit}>kg/m<sup>2</sup></span>
             </div>
             {result && category ? <>
+              {displayAge < 20 ? <p className={styles.error}>برای افراد زیر 20 سال، تفسیر BMI به سن و جنسیت وابسته است؛ از نمودار رشد متناسب با سن استفاده کنید.</p> : <>
               <div className={`${styles.status} ${styles[result.category]}`}><span className={styles.statusDot} />{category.label}</div>
               <p className={styles.resultHint}>{category.hint}</p>
               <div className={styles.scale} role="img" aria-label={`مقدار BMI برابر ${result.value.toFixed(2)} از 40`}>
@@ -137,7 +165,8 @@ export default function BmiCalculator() {
                 </div>
                 <div className={styles.scaleLabels}>{markers.map((marker) => <span key={marker.value} style={{ left: `${(marker.value / 40) * 100}%` }}>{marker.value}</span>)}</div>
               </div>
-            </> : <p className={styles.error}>برای نمایش نتیجه، قد و وزن را در بازه معتبر وارد کنید.</p>}
+              </>}
+            </> : !validAge ? <p className={styles.error}>سن باید عددی صحیح بین 15 تا 120 سال باشد.</p> : <p className={styles.error}>برای نمایش نتیجه، قد و وزن را در بازه معتبر وارد کنید.</p>}
             <div className={styles.note}><span aria-hidden="true">ⓘ</span><p>این شاخص یک ابزار غربالگری عمومی برای بزرگسالان است و تشخیص پزشکی محسوب نمی‌شود.</p></div>
           </section>
         </div>

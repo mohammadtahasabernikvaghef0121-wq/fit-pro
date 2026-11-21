@@ -31,8 +31,8 @@ export default function AnimatedCounter({ value }: { value: string }) {
     const parts = splitNumber(value);
     if (!parts) {
       lastValue.current = null;
-      setDisplay(value);
-      return;
+      const frame = window.requestAnimationFrame(() => setDisplay(value));
+      return () => window.cancelAnimationFrame(frame);
     }
 
     const from = lastValue.current ?? 0;
@@ -40,18 +40,19 @@ export default function AnimatedCounter({ value }: { value: string }) {
     lastValue.current = target;
 
     if (target === from || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setDisplay(value);
-      return;
+      const frame = window.requestAnimationFrame(() => setDisplay(value));
+      return () => window.cancelAnimationFrame(frame);
     }
 
     const duration = 760;
     let frame = 0;
     let start = 0;
     let lastPaint = 0;
-    setDisplay(`${prefix}${formatPart(from, decimals)}${suffix}`);
-
     const tick = (time: number) => {
-      if (!start) start = time;
+      if (!start) {
+        start = time;
+        setDisplay(`${prefix}${formatPart(from, decimals)}${suffix}`);
+      }
       const progress = Math.min((time - start) / duration, 1);
       const eased = 1 - (1 - progress) ** 3;
       const current = from + (target - from) * eased;
