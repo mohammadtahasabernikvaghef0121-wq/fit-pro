@@ -1,8 +1,19 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import path from "node:path";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config({ path: ".env" });
+
+const root = process.cwd();
+function run(command, args) {
+  const result = spawnSync(command, args, { cwd: root, stdio: "inherit", env: process.env });
+  if (result.error) throw result.error;
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
+run(process.execPath, [path.join(root, "node_modules", "prisma", "build", "index.js"), "migrate", "deploy"]);
+run(process.execPath, [path.join(root, "node_modules", "tsx", "dist", "cli.mjs"), "prisma/seed.ts"]);
 
 const nextArgs = ["node_modules/next/dist/bin/next", "dev"];
 if (process.env.FIT_PRO_NEXT_PORT) nextArgs.push("--port", process.env.FIT_PRO_NEXT_PORT);

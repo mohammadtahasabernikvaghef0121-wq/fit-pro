@@ -392,6 +392,7 @@ dialog[open],[role="dialog"][data-state="open"],[role="alertdialog"][data-state=
 }
 
 /* Consistent box sizing and mobile text rendering across browser engines. */
+:root{color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 

@@ -15,3 +15,17 @@
 @media(max-width:740px){.page{min-height:calc(100vh - 64px);min-height:calc(100svh - 64px);padding:20px 13px}.shell{padding:20px 16px;border-radius:23px}.layout{grid-template-columns:1fr}.resultCard{min-height:330px}.calorieNumber{font-size:46px}}
 @media(max-width:420px){.fields,.activityOptions{grid-template-columns:1fr}.fields{gap:12px}.activityOption{min-height:58px}.resultCard{padding:19px}.calorieNumber{font-size:39px}.calorieNumber span{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.activityOption,.inputWrap{transition:none}}
+
+/* Keep the calculator in the site's shared light burgundy and gold theme. */
+.page{--bg:#fffaf1;--panel:#fff;--line:#eadfe0;--muted:#70595c;color:#3e171b;background:radial-gradient(ellipse at 15% 10%,#e0a91f16,transparent 38%),#fff}
+.glow{background:#e0a91f16}
+.shell{border-color:#e0a91f75;background:rgba(255,255,255,.96);box-shadow:0 24px 68px #3e171b12,0 0 0 1px #e0a91f12,inset 0 1px #fff;backdrop-filter:none;-webkit-backdrop-filter:none}
+.brand{color:#3e171b}.brand b,.brand>span{color:#7a0d1a}.brand>span{border-color:#7a0d1a30;background:#7a0d1a0a}
+.kicker{color:#7a0d1a}.intro h1,.sectionTitle h2,.resultHead h2{color:#3e171b}.intro p,.sectionTitle p{color:#70595c}
+.formCard,.resultCard{border-color:#eadfe0;background:#fff;box-shadow:0 8px 24px #3e171b08}
+.sectionTitle{border-color:#eadfe0}.sectionTitle>span{color:#7a0d1a;background:#fff5dc}
+.field{color:#3e171b}.inputWrap{border-color:#eadfe0;background:#fff}.inputWrap:focus-within,.field select:focus-visible{border-color:#e0a91f;box-shadow:0 0 0 3px #e0a91f24}
+.inputWrap input{color:#3e171b}.inputWrap small{color:#70595c}.field select{border-color:#eadfe0;color:#3e171b;background:#fff}.field select option{color:#3e171b;background:#fff}.helper{color:#70595c}
+.activityFieldset{border-color:#eadfe0}.activityFieldset legend{color:#3e171b}.activityOption{border-color:#eadfe0;background:#fff}.activityOption:hover{border-color:#e0a91f}.activitySelected{border-color:#e0a91f;background:#fffaf1}.activitySelected .radioMark{border-color:#7a0d1a}.activitySelected .radioMark:after{background:#7a0d1a}.activityOption b{color:#3e171b}.activityOption small{color:#70595c}.activityOption:focus-within{outline-color:#7a0d1a}
+.resultCard{background:radial-gradient(ellipse at 85% 0%,#e0a91f14,transparent 54%),linear-gradient(145deg,#fffdf9,#fff8ed 76%)}.resultHead>div>span,.formula b{color:#7a0d1a}.resultIcon{border-color:#e0a91f70;color:#7a0d1a;background:#e0a91f14}
+.calorieNumber{color:#7a0d1a}.calorieNumber span,.resultDetails span,.resultDetails b small,.resultNote,.formula{color:#70595c}.maintenance{color:#765200}.resultDetails>div{border-color:#eadfe0;background:#fff}.resultDetails b{color:#3e171b}.empty>span{border-color:#e0a91f70;color:#7a0d1a;background:#fff5dc}.empty p,.disclaimer{color:#70595c}
