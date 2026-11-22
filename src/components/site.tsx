@@ -5,7 +5,7 @@ import footerStyles from "./site-footer.module.css";
 
 export function SiteHeader() {
   return <div className="site-header"><header className="container topbar">
-    <Link href="/" className="brand"><Image src="/fit-pro-wordmark.jpg" alt="Fit Pro" width={160} height={52} className="brand-logo" /></Link>
+    <Link href="/" className="brand"><Image src="/fit-pro-wordmark.jpg" alt="Fit Pro" width={1440} height={460} loading="eager" className="brand-logo" /></Link>
     <nav className="nav" aria-label="ناوبری اصلی">
       <Link href="/">خانه</Link><Link href="/shop">فروشگاه</Link><Link href="/cart">سبد خرید</Link><Link href="/pricing">ثبت سفارش</Link><Link href="/support">پشتیبانی</Link><Link href="/about">درباره مربی</Link><Link href="/faq">پرسش‌های رایج</Link>
       <Link href="/bmi-calculator">محاسبه BMI</Link>
