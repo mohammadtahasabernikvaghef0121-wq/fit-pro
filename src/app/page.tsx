@@ -5,9 +5,12 @@ import type {Metadata} from "next";
 import {siteConfig} from "@/lib/config";
 import HeroTilt from "@/components/hero-tilt";
 import HeroHeadline from "@/components/hero-headline";
+import {headers} from "next/headers";
 export const metadata:Metadata={title:`${siteConfig.brand} | برنامه تمرین و تغذیه`,description:"همراهی شخصی برای ساختن عادت‌های پایدار در تمرین و تغذیه.",alternates:{canonical:"/"},openGraph:{title:`${siteConfig.brand} | مربی‌گری تندرستی`,description:"برنامه تمرین و تغذیه متناسب با زندگی شما.",url:"/"}};
 export const dynamic="force-dynamic";
 export default async function Home() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const structuredData = JSON.stringify({"@context":"https://schema.org","@type":"HealthAndBeautyBusiness","name":siteConfig.brand,"description":"خدمات مربی‌گری تمرین و تغذیه"}).replace(/</g, "\\u003c");
   let packages: Awaited<ReturnType<typeof db.coachingPackage.findMany>> = [];
   try { packages = await db.coachingPackage.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" }, take: 3 }); } catch { /* Keep the public landing page available while the database is offline. */ }
   return <main><section className="container hero"><div className="hero-copy"><span className="eyebrow">تندرستی، با ریتم زندگی شما</span><HeroHeadline /><p>قرار نیست همه‌چیز را یک‌باره عوض کنید. با همراهی مربی، هدف‌های روشن و برنامه‌ای متناسب با روزهای واقعی‌تان پیش می‌رویم.</p><div className="hero-actions"><Link className="btn lime" href="/pricing">دیدن برنامه‌ها ←</Link><Link className="btn light" href="/about">دربارهٔ مربی</Link></div><p style={{fontSize:13}}>✦ برنامه شخصی &nbsp; · &nbsp; پیگیری منظم &nbsp; · &nbsp; قدم‌های قابل‌تداوم</p></div><HeroTilt /></section>
@@ -16,6 +19,6 @@ export default async function Home() {
     <section className="section" style={{background:"#fff"}}><div className="container"><div className="section-head"><div><span className="eyebrow">انتخاب همراهی</span><h2>برنامه‌ها و قیمت‌ها</h2></div><Link href="/pricing" className="btn light small">همه برنامه‌ها ←</Link></div><div className="grid3">{packages.map((p)=><article key={p.id} className={`card ${p.slug==="combined"?"featured":""}`}>{p.slug==="combined"&&<span className="tag">15% تخفیف</span>}<h3>{p.title}</h3><p className="muted">{p.description}</p><div className="price">{p.slug === "combined" && <del>1,000,000 تومان</del>} {formatTomans(p.priceRials)} <small>تومان</small></div><Link href={`/login?next=/dashboard/requests/new&package=${p.id}`} className="btn light small">انتخاب برنامه</Link></article>)}</div>{packages.length===0&&<p className="muted">برنامه‌های همراهی به‌زودی معرفی می‌شوند. برای آگاهی بیشتر با ما تماس بگیرید.</p>}</div></section>
     <section className="section"><div className="container card" style={{background:"#fff5dc",display:"flex",justifyContent:"space-between",alignItems:"center",gap:20,flexWrap:"wrap"}}><div><span className="eyebrow">شروع آگاهانه</span><h2>هر تغییری با یک قدم کوچک آغاز می‌شود.</h2><p className="muted">برای انتخاب مسیر مناسب، برنامه‌ها را ببینید و فرم درخواست را در سایت تکمیل کنید.</p></div><Link href="/pricing" className="btn">مشاهده برنامه‌ها ←</Link></div></section>
     <section className="section"><div className="container support-callout"><div><span className="eyebrow">ارتباط خصوصی با مربی</span><h2>نیاز به راهنمایی داری؟</h2><p className="muted">درخواستت را از بخش پشتیبانی بفرست و پاسخ را در صندوق خصوصی حساب خودت دریافت کن.</p></div><Link className="btn" href="/support">رفتن به پشتیبانی ←</Link></div></section>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify({"@context":"https://schema.org","@type":"HealthAndBeautyBusiness","name":siteConfig.brand,"description":"خدمات مربی‌گری تمرین و تغذیه"})}}/>
+    <script type="application/ld+json" nonce={nonce} dangerouslySetInnerHTML={{__html:structuredData}}/>
   </main>;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import LogoutButton from "@/components/logout-button";
 import AnimatedCounter from "@/components/animated-counter";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
@@ -8,7 +9,7 @@ type RangeKey = "7d" | "30d" | "12m" | "all";
 type View = "overview" | "control";
 type DashboardData = {
   metrics: { visitors: number; requests: number; transactions: number; revenueToman: number };
-  requests: { id: string; name: string; phone: string; package: string; status: string; paymentStatus: string; createdAt: string }[];
+  requests: { id: string; name: string; phone: string; package: string; status: string; paymentStatus: string; createdAt: string; intake: Record<string, unknown>; plans: { id: string; title: string; createdAt: string }[] }[];
   payments: { id: string; orderRef: string; name: string; phone: string; package: string; amountToman: number; status: string; createdAt: string }[];
   packages: { id: string; slug: string; title: string; description: string; durationDays: number; priceToman: number; requestType: "NUTRITION" | "TRAINING" | "COMBINED"; active: boolean }[];
 };
@@ -27,6 +28,7 @@ export default function AdminDashboard({ initialView }: { initialView: View }) {
   const [packageFilter, setPackageFilter] = useState("all");
   const [form, setForm] = useState({ title: "", slug: "", description: "", durationDays: "30", priceToman: "500000", requestType: "TRAINING" });
   const [notice, setNotice] = useState("");
+  const [uploadingPlanFor, setUploadingPlanFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -63,6 +65,27 @@ export default function AdminDashboard({ initialView }: { initialView: View }) {
     setNotice("بستهٔ جدید ساخته شد."); await load();
   }
 
+  async function uploadPlan(event: FormEvent<HTMLFormElement>, requestId: string) {
+    event.preventDefault();
+    setNotice("");
+    setUploadingPlanFor(requestId);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.set("requestId", requestId);
+    try {
+      const response = await fetch("/api/admin/plans", { method: "POST", body: formData });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "بارگذاری برنامه انجام نشد.");
+      form.reset();
+      setNotice("برنامه بارگذاری شد و در پنل مشتری قرار گرفت.");
+      await load();
+    } catch (cause) {
+      setNotice(cause instanceof Error ? cause.message : "بارگذاری برنامه انجام نشد.");
+    } finally {
+      setUploadingPlanFor(null);
+    }
+  }
+
   return <main className="admin-app" dir="rtl">
     <aside className="admin-sidebar">
       <Link className="admin-brand" href="/">FIT<span>PRO</span><small>پنل مدیریت</small></Link>
@@ -70,7 +93,7 @@ export default function AdminDashboard({ initialView }: { initialView: View }) {
       <Link href="/admin" className={`admin-nav-item ${view === "overview" ? "selected" : ""}`}><i>▦</i> نمای کلی</Link>
       <Link href="/admin/control" className={`admin-nav-item ${view === "control" ? "selected" : ""}`}><i>⚙</i> مدیریت سایت</Link>
       <Link href="/shop" className="admin-nav-item"><i>↗</i> مشاهدهٔ فروشگاه</Link>
-      <div className="admin-side-bottom"><span className="admin-online-dot" /> سامانه فعال است <a href="/api/auth/logout">خروج از حساب</a></div>
+      <div className="admin-side-bottom"><span className="admin-online-dot" /> سامانه فعال است <LogoutButton>خروج از حساب</LogoutButton></div>
     </aside>
     <section className="admin-main">
       <header className="admin-topbar"><div><span className="admin-eyebrow">FIT PRO / ADMIN</span><h1>{view === "overview" ? "نمای کلی" : "مدیریت سایت"}</h1></div><div className="admin-top-actions"><label className="admin-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="جستجوی سفارش یا مشتری" /></label><button className="admin-refresh" onClick={() => void load()} aria-label="تازه‌سازی اطلاعات">↻</button><div className="admin-avatar">م</div></div></header>
@@ -78,6 +101,7 @@ export default function AdminDashboard({ initialView }: { initialView: View }) {
         {view === "overview" ? <>
           <div className="admin-welcome"><div><b>خوش آمدید</b><p>آمار وب‌سایت و سفارش‌های Fit Pro را از اینجا دنبال کنید.</p></div><label className="admin-select-label">بازهٔ گزارش<select value={range} onChange={(event) => setRange(event.target.value as RangeKey)}><option value="7d">۷ روز اخیر</option><option value="30d">۳۰ روز اخیر</option><option value="12m">۱۲ ماه اخیر</option><option value="all">از ابتدا</option></select></label></div>
           {error && <div className="admin-alert">{error} <button onClick={() => void load()}>تلاش دوباره</button></div>}
+          {notice && <div className="admin-notice" role="status">{notice}</div>}
           <div className="admin-metrics">
             <Metric icon="◉" label="بازدیدها" value={number(data.metrics.visitors)} tone="red" loading={loading} detail="در بازهٔ انتخاب‌شده" />
             <Metric icon="▤" label="درخواست‌ها" value={number(data.metrics.requests)} tone="gold" loading={loading} detail="بدون پیش‌نویس‌ها" />
@@ -85,7 +109,7 @@ export default function AdminDashboard({ initialView }: { initialView: View }) {
             <Metric icon=" تومان" label="درآمد تأییدشده" value={money(data.metrics.revenueToman)} tone="dark" loading={loading} detail="فقط پرداخت‌های واقعی" />
           </div>
           <div className="admin-section-heading"><div><span>فعالیت اخیر</span><h2>درخواست‌های مشتریان</h2></div><Link href="/admin/control">مدیریت بسته‌ها ←</Link></div>
-          <div className="admin-table-wrap"><table><thead><tr><th>مشتری</th><th>بسته</th><th>وضعیت</th><th>پرداخت</th><th>زمان ثبت</th></tr></thead><tbody>{loading ? <tr><td colSpan={5}>در حال دریافت اطلاعات…</td></tr> : filteredRequests.length ? filteredRequests.map((item) => <tr key={item.id}><td><b>{item.name}</b><small>{item.phone}</small></td><td>{item.package}</td><td><Status value={item.status} /></td><td><Status value={item.paymentStatus} /></td><td>{date(item.createdAt)}</td></tr>) : <tr><td colSpan={5}>در این بازه درخواستی ثبت نشده است.</td></tr>}</tbody></table></div>
+          <div className="admin-table-wrap"><table><thead><tr><th>مشتری</th><th>بسته</th><th>وضعیت</th><th>پرداخت</th><th>زمان ثبت</th></tr></thead><tbody>{loading ? <tr><td colSpan={5}>در حال دریافت اطلاعات…</td></tr> : filteredRequests.length ? filteredRequests.map((item) => <tr key={item.id}><td><b>{item.name}</b><small>{item.phone}</small></td><td>{item.package}</td><td><Status value={item.status} /></td><td><Status value={item.paymentStatus} /></td><td>{date(item.createdAt)}<details className="admin-request-details"><summary>اطلاعات مشتری و ارسال برنامه</summary>{Object.values(item.intake).some((value) => value !== undefined && value !== null && String(value).length > 0) && <dl>{Object.entries(item.intake).filter(([, value]) => value !== undefined && value !== null && String(value).length > 0 && value !== true).map(([key, value]) => <div key={key}><dt>{({ age: "سن", height: "قد", weight: "وزن", goal: "هدف", experience: "سابقه تمرین", activityLevel: "سطح فعالیت", trainingDays: "روزهای تمرین", equipment: "امکانات تمرین", dietaryPreferences: "ترجیحات غذایی", allergies: "حساسیت غذایی", injuries: "آسیب‌دیدگی", healthConditions: "محدودیت سلامتی", notes: "توضیحات" } as Record<string, string>)[key] || key}</dt><dd>{String(value)}</dd></div>)}</dl>}{item.plans.length > 0 && <div className="admin-plan-list"><b>فایل‌های بارگذاری‌شده</b>{item.plans.map((plan) => <a href={`/api/plans/${plan.id}`} key={plan.id}>{plan.title}</a>)}</div>}{item.paymentStatus === "PAID" || item.paymentStatus === "DEMO_PAID" ? <form className="admin-plan-upload" onSubmit={(event) => void uploadPlan(event, item.id)}><label>عنوان برنامه<input name="title" required minLength={2} maxLength={120} placeholder="مثلاً برنامه تمرینی آذر" /></label><label>فایل برنامه (PDF، حداکثر 10 مگابایت)<input name="file" type="file" accept="application/pdf,.pdf" required /></label><button className="admin-primary" disabled={uploadingPlanFor === item.id}>{uploadingPlanFor === item.id ? "در حال بارگذاری…" : "بارگذاری و ارسال به مشتری"}</button></form> : <p className="admin-upload-hint">بعد از تأیید پرداخت، امکان بارگذاری برنامه فعال می‌شود.</p>}</details></td></tr>) : <tr><td colSpan={5}>در این بازه درخواستی ثبت نشده است.</td></tr>}</tbody></table></div>
           <div className="admin-section-heading"><div><span>وضعیت مالی</span><h2>تراکنش‌های اخیر</h2></div><span className="admin-muted">پرداخت آزمایشی در درآمد لحاظ نمی‌شود</span></div>
           <div className="admin-table-wrap"><table><thead><tr><th>شماره سفارش</th><th>مشتری</th><th>بسته</th><th>مبلغ</th><th>وضعیت</th><th>زمان</th></tr></thead><tbody>{loading ? <tr><td colSpan={6}>در حال دریافت اطلاعات…</td></tr> : filteredPayments.length ? filteredPayments.map((item) => <tr key={item.id}><td dir="ltr">{item.orderRef}</td><td><b>{item.name}</b><small>{item.phone}</small></td><td>{item.package}</td><td>{money(item.amountToman)}</td><td><Status value={item.status} /></td><td>{date(item.createdAt)}</td></tr>) : <tr><td colSpan={6}>تراکنشی در این بازه وجود ندارد.</td></tr>}</tbody></table></div>
         </> : <>

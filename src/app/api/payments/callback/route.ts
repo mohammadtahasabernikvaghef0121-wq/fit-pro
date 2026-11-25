@@ -4,6 +4,7 @@ import { verifyZibalPayment } from "@/lib/zibal";
 import { isVerifiedPayment } from "@/lib/policies";
 import { decryptHealthData } from "@/lib/health-data";
 import { sendPaymentConfirmedToTelegram } from "@/lib/telegram";
+import { trustedPublicOrigin } from "@/lib/policies";
 
 async function notifyPaymentOnce(paymentId: string) {
   const now = new Date();
@@ -41,12 +42,18 @@ async function notifyPaymentOnce(paymentId: string) {
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
+  let publicOrigin: string;
+  try {
+    publicOrigin = trustedPublicOrigin(process.env.NEXT_PUBLIC_SITE_URL, req.url, process.env.NODE_ENV === "production");
+  } catch {
+    return NextResponse.json({ error: "Payment callback URL is not configured." }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  }
   const trackId = url.searchParams.get("trackId");
-  if (!trackId) return NextResponse.redirect(new URL("/payment/result?status=failed", url.origin));
+  if (!trackId) return NextResponse.redirect(new URL("/payment/result?status=failed", publicOrigin));
   try {
     const payment = await db.payment.findUnique({ where: { trackId } });
-    if (!payment) return NextResponse.redirect(new URL("/payment/result?status=failed", url.origin));
-    if (payment.status === "DEMO_PAID") return NextResponse.redirect(new URL(`/dashboard/requests/new?request=${encodeURIComponent(payment.requestId)}`, url.origin));
+    if (!payment) return NextResponse.redirect(new URL("/payment/result?status=failed", publicOrigin));
+    if (payment.status === "DEMO_PAID") return NextResponse.redirect(new URL(`/dashboard/requests/new?request=${encodeURIComponent(payment.requestId)}`, publicOrigin));
     if (payment.status !== "PAID") {
       const verified = await verifyZibalPayment(trackId);
       if (isVerifiedPayment(Number(verified.result), Number(verified.amount), Number(payment.amountRials))) {
@@ -61,11 +68,11 @@ export async function GET(req: Request) {
     const latest = await db.payment.findUnique({ where: { id: payment.id }, select: { status: true } });
     if (latest?.status === "PAID") {
       await notifyPaymentOnce(payment.id);
-      return NextResponse.redirect(new URL(`/dashboard/requests/new?request=${encodeURIComponent(payment.requestId)}`, url.origin));
+      return NextResponse.redirect(new URL(`/dashboard/requests/new?request=${encodeURIComponent(payment.requestId)}`, publicOrigin));
     }
     const status = latest?.status === "PENDING" ? "pending" : "failed";
-    return NextResponse.redirect(new URL(`/payment/result?status=${status}&request=${payment.requestId}`, url.origin));
+    return NextResponse.redirect(new URL(`/payment/result?status=${status}&request=${encodeURIComponent(payment.requestId)}`, publicOrigin));
   } catch {
-    return NextResponse.redirect(new URL("/payment/result?status=pending", url.origin));
+    return NextResponse.redirect(new URL("/payment/result?status=pending", publicOrigin));
   }
 }

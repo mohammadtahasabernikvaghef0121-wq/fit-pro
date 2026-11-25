@@ -15,7 +15,7 @@ function run(command, args) {
 run(process.execPath, [path.join(root, "node_modules", "prisma", "build", "index.js"), "migrate", "deploy"]);
 run(process.execPath, [path.join(root, "node_modules", "tsx", "dist", "cli.mjs"), "prisma/seed.ts"]);
 
-const nextArgs = ["node_modules/next/dist/bin/next", "dev"];
+const nextArgs = ["node_modules/next/dist/bin/next", "dev", "--hostname", "127.0.0.1"];
 if (process.env.FIT_PRO_NEXT_PORT) nextArgs.push("--port", process.env.FIT_PRO_NEXT_PORT);
 const children = [
   spawn(process.execPath, ["node_modules/tsx/dist/cli.mjs", "src/server/express.ts"], { stdio: "inherit", env: process.env }),

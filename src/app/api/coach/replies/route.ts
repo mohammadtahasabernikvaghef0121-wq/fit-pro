@@ -19,6 +19,10 @@ export async function POST(request: Request) {
   if (!requestRow) return NextResponse.json({ error: "گفت‌وگو پیدا نشد." }, { status: 404 });
   if (requestRow.status === "CLOSED") return NextResponse.json({ error: "این گفت‌وگو بسته شده است؛ برای ادامه یک درخواست تازه ثبت کنید." }, { status: 409 });
 
+  const since = new Date(Date.now() - 10 * 60_000);
+  const recentReplies = await db.supportReply.count({ where: { request: { userId: user.id, source: "WEBSITE" }, createdAt: { gte: since } } });
+  if (recentReplies >= 10) return NextResponse.json({ error: "تعداد پیام‌ها زیاد است. چند دقیقه دیگر دوباره تلاش کنید." }, { status: 429, headers: { "Retry-After": "600", "Cache-Control": "no-store" } });
+
   const savedReply = await db.supportReply.create({ data: { requestId: requestRow.id, text: parsed.data.message, isAdmin: false } });
   await db.supportRequest.update({ where: { id: requestRow.id }, data: { status: "IN_PROGRESS" } });
   let telegramNotified = false;

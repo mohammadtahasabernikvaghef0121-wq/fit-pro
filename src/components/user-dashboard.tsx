@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import LogoutButton from "@/components/logout-button";
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import AnimatedCounter from "@/components/animated-counter";
@@ -54,7 +55,7 @@ export default function UserDashboard() {
       <a className="user-nav-link" href="#payments">↗ <span>تراکنش‌ها</span></a>
       <Link className="user-nav-link" href="/support">? <span>پشتیبانی</span></Link>
       <Link className="user-nav-link" href="/shop">＋ <span>خرید برنامه</span></Link>
-      <div className="user-side-bottom"><Link href="/api/auth/logout">خروج از حساب ←</Link></div>
+      <div className="user-side-bottom"><LogoutButton>خروج از حساب ←</LogoutButton></div>
     </aside>
     <section className="user-main" id="overview">
       <header className="user-topbar"><div><span className="user-eyebrow">FIT PRO / MY ACCOUNT</span><h1>پنل کاربری</h1></div><div className="user-profile-chip"><div className="user-avatar">{(data?.account.name || "ک").trim().charAt(0)}</div><span>{data?.account.name || "حساب کاربری"}<small dir="ltr">{data?.account.phone || ""}</small></span></div></header>
@@ -74,7 +75,7 @@ export default function UserDashboard() {
           {loading ? <div className="user-empty">در حال دریافت برنامه‌ها…</div> : programs.length === 0 ? <div className="user-empty"><b>هنوز برنامه‌ای برای نمایش نداری</b><p>بعد از خرید برنامه، جزئیات و فایل‌های تحویلی در همین بخش قرار می‌گیرند.</p><Link className="btn small" href="/shop">رفتن به فروشگاه</Link></div> : <div className="user-program-list">{programs.map((program) => <article className="user-program-card" key={program.id}><div className="user-program-top"><div><span className="user-program-type">{typeName[program.requestType] || "برنامه"}</span><h3>{program.title}</h3></div><span className={`user-state ${program.status === "DELIVERED" ? "done" : ""}`}>{requestName[program.status] || program.status}</span></div><p className="user-program-description">{program.description}</p><div className="user-program-facts"><span>مدت <b>{formatNumber(program.durationDays)} روز</b></span><span>ثبت سفارش <b>{formatDate(program.createdAt)}</b></span><span>پرداخت <b>{paymentName[program.paymentStatus] || paymentName.PENDING}</b></span></div>
             {program.status === "PAID" && <Link className="btn small" href={`/dashboard/requests/new?request=${encodeURIComponent(program.id)}`}>تکمیل اطلاعات برنامه</Link>}
             {Object.values(program.intake).some((value) => value !== undefined && value !== null && String(value).length > 0) && <div className="user-intake"><span>اطلاعات برنامه</span>{program.intake.height != null && <b>قد: {String(program.intake.height)} سانتی‌متر</b>}{program.intake.weight != null && <b>وزن: {String(program.intake.weight)} کیلوگرم</b>}{program.intake.goal != null && <b>هدف: {String(program.intake.goal)}</b>}</div>}
-            {program.plans.length > 0 && <div className="user-delivered-plans"><span>فایل‌های برنامه</span>{program.plans.map((plan) => <a key={plan.id} href={`/api/plans/${plan.id}`}>↓ {plan.title} <small>{formatDate(plan.createdAt)}</small></a>)}</div>}
+            {program.plans.length > 0 && <div className="user-delivered-plans"><span>فایل‌های برنامه</span>{program.plans.map((plan) => <div className="user-delivered-plan" key={plan.id}><div><b>{plan.title}</b><small>{formatDate(plan.createdAt)} · PDF</small></div><Link className="btn small" href={`/dashboard/plans/${encodeURIComponent(plan.id)}`}>مشاهده برنامه</Link></div>)}</div>}
           </article>)}</div>}
         </section>
 

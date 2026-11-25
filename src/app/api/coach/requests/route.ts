@@ -51,6 +51,10 @@ export async function POST(request: Request) {
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "اطلاعات فرم را بررسی کنید." }, { status: 400 });
 
+  const since = new Date(Date.now() - 10 * 60_000);
+  const recent = await db.supportRequest.count({ where: { userId: user.id, source: "WEBSITE", createdAt: { gte: since } } });
+  if (recent >= 5) return NextResponse.json({ error: "تعداد درخواست‌ها زیاد است. چند دقیقه دیگر دوباره تلاش کنید." }, { status: 429, headers: { "Retry-After": "600", "Cache-Control": "no-store" } });
+
   const { name, message, shareHealthData, ...healthDetails } = parsed.data;
   void shareHealthData;
   try {

@@ -1,8 +1,8 @@
-import { randomBytes, createHmac, randomInt } from "node:crypto";
+import { randomBytes, createHmac, randomInt, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { Role } from "@/generated/prisma/client";
-import {canSendOtp,isOtpUsable,hasRole} from "@/lib/policies";
+import {canSendOtp,isOtpUsable,hasRole,isRequestSameOrigin} from "@/lib/policies";
 import { encryptHealthData } from "@/lib/health-data";
 
 const pepper = () => {
@@ -11,7 +11,7 @@ const pepper = () => {
   return value;
 };
 export const hash = (value: string) => createHmac("sha256", pepper()).update(value).digest("hex");
-export function isSameOrigin(req:Request){const origin=req.headers.get("origin");if(!origin)return process.env.NODE_ENV!=="production";try{const expected=process.env.NEXT_PUBLIC_SITE_URL?new URL(process.env.NEXT_PUBLIC_SITE_URL).origin:new URL(req.url).origin;return new URL(origin).origin===expected}catch{return false}}
+export function isSameOrigin(req:Request){return isRequestSameOrigin(req.url,req.headers.get("origin"))}
 export const normalizePhone = (input: string) => {
   const digits = input.replace(/[\s()-]/g, "").replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
   const iran = digits.startsWith("+98") ? `0${digits.slice(3)}` : digits.startsWith("0098") ? `0${digits.slice(4)}` : digits;
@@ -40,7 +40,9 @@ export async function verifyOtp(phone: string, code: string) {
   const record = await db.otpCode.findFirst({ where: { phone }, orderBy: { createdAt: "desc" } });
   if (!record || !isOtpUsable(record.expiresAt,record.attempts)) return null;
   const updated = await db.otpCode.updateMany({ where: { id: record.id, attempts: record.attempts }, data: { attempts: { increment: 1 } } });
-  if (!updated.count || hash(`${phone}:${code}`) !== record.hash) return null;
+  const candidate = Buffer.from(hash(`${phone}:${code}`), "hex");
+  const expected = Buffer.from(record.hash, "hex");
+  if (!updated.count || candidate.length !== expected.length || !timingSafeEqual(candidate, expected)) return null;
   await db.otpCode.deleteMany({ where: { phone } });
   const user = await db.user.upsert({ where: { phone }, create: { phone }, update: {} });
   const token = randomBytes(32).toString("base64url");

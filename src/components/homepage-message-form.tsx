@@ -17,7 +17,7 @@ export default function HomepageMessageForm() {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: data.get("name"), message: data.get("message") }),
+        body: JSON.stringify({ name: data.get("name"), message: data.get("message"), website: data.get("website") }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "ارسال پیام انجام نشد. دوباره تلاش کنید.");
@@ -31,6 +31,7 @@ export default function HomepageMessageForm() {
   }
 
   return <form className={styles.form} onSubmit={submit}>
+    <div aria-hidden="true" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}><label htmlFor="message-website">Leave this field empty</label><input id="message-website" name="website" tabIndex={-1} autoComplete="off" /></div>
     <div className={styles.field}><label htmlFor="message-name">نام و نام خانوادگی</label><input id="message-name" name="name" autoComplete="name" minLength={2} maxLength={100} required placeholder="نام خود را وارد کنید" /></div>
     <div className={styles.field}><label htmlFor="message-body">متن پیام</label><textarea id="message-body" name="message" minLength={1} maxLength={2000} required rows={5} placeholder="پیامتان را اینجا بنویسید" /></div>
     {status && <p className={status.kind === "success" ? styles.success : styles.error} role={status.kind === "success" ? "status" : "alert"}>{status.text}</p>}

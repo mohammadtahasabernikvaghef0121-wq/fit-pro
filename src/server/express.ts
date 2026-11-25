@@ -10,6 +10,9 @@ app.use(express.json({ limit: "32kb" }));
 app.use((_req, res, next) => {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   next();
 });
 
@@ -85,6 +88,7 @@ app.get("/user-dashboard", requireSignedInUser, async (_req, res, next) => {
         durationDays: request.package.durationDays,
         requestType: request.requestType,
         status: request.status,
+        paymentStatus: request.payments[0]?.status ?? "PENDING",
         createdAt: request.createdAt,
         intake: { age: intake.age, height: intake.height, weight: intake.weight, goal: intake.goal, experience: intake.experience, injuries: intake.injuries },
         plans: request.plans.map((plan) => ({ id: plan.id, title: plan.title, createdAt: plan.createdAt })),
@@ -119,7 +123,7 @@ app.get("/metrics", requireOwner, async (req, res, next) => {
 
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   void _next;
-  console.error("Admin API error", error);
+  console.error("Admin API request failed", error instanceof Error ? error.name : "UnknownError");
   res.status(500).json({ error: "دریافت اطلاعات پنل انجام نشد." });
 });
 

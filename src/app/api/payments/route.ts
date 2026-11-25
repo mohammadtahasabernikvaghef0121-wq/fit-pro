@@ -4,6 +4,7 @@ import {currentUser,isSameOrigin} from "@/lib/auth";
 import {db} from "@/lib/db";
 import {createZibalPayment} from "@/lib/zibal";
 import {sendOrderCreatedToTelegram} from "@/lib/telegram";
+import {trustedPublicOrigin} from "@/lib/policies";
 export const runtime="nodejs";
 export async function POST(req:Request){
  if(!isSameOrigin(req))return NextResponse.json({error:"درخواست معتبر نیست."},{status:403});
@@ -38,7 +39,7 @@ export async function POST(req:Request){
    if(!completed)throw new Error("Demo order was not found after payment.");
    return NextResponse.json({url:`/dashboard/requests/new?request=${completed.id}`,demo:true});
   }
-  const base=process.env.NEXT_PUBLIC_SITE_URL??new URL(req.url).origin;
+  const base=trustedPublicOrigin(process.env.NEXT_PUBLIC_SITE_URL,req.url,process.env.NODE_ENV==="production");
   const created=await createZibalPayment({amountRials:Number(reservation.payment.amountRials),orderId:reservation.payment.orderRef,callbackUrl:`${base}/api/payments/callback`,description:reservation.description,mobile:reservation.phone});
   await db.payment.update({where:{id:paymentId},data:{trackId:created.trackId,gatewayResponse:created.gatewayResponse}});
   try {

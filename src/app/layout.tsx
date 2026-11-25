@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import "./globals.css";
 import { SiteHeader, SiteFooter } from "@/components/site";
 import { siteConfig } from "@/lib/config";
@@ -20,6 +21,7 @@ export const viewport: Viewport = {
   themeColor: "#fff",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  await connection();
   return <html lang="fa" dir="rtl"><body><SiteAnalytics /><MotionEnhancer /><SiteHeader />{children}<SiteFooter /><ExitIntentModal /></body></html>;
 }

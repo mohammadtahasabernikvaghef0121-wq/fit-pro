@@ -26,11 +26,14 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "متن پیام را بررسی کنید." }, { status: 400 });
   const name = user.name || "مشتری Fit Pro";
   try {
+    const since = new Date(Date.now() - 10 * 60_000);
+    const recent = await db.supportRequest.count({ where: { userId: user.id, source: "WEBSITE", createdAt: { gte: since } } });
+    if (recent >= 5) return NextResponse.json({ error: "تعداد پیام‌ها زیاد است. چند دقیقه دیگر دوباره تلاش کنید." }, { status: 429, headers: { "Retry-After": "600", "Cache-Control": "no-store" } });
     const row = await db.supportRequest.create({ data: { userId: user.id, source: "WEBSITE", phone: user.phone, firstName: name, messageText: parsed.data.message, status: "PENDING" } });
     let telegramNotified = false;
     try { telegramNotified = await sendPrivateSupportNoticeToTelegram(row.requestNumber); }
     catch (error) { console.error("Support Telegram notice failed", error instanceof Error ? error.message : "unknown error"); }
-    return NextResponse.json({ requestNumber: row.requestNumber, status: row.status, createdAt: row.createdAt.toISOString(), message: row.messageText, replies: [], telegramNotified }, { status: 201 });
+    return NextResponse.json({ requestNumber: row.requestNumber, status: row.status, createdAt: row.createdAt.toISOString(), message: row.messageText, replies: [], telegramNotified }, { status: 201, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Support request could not be created", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json({ error: "ثبت درخواست انجام نشد. دوباره تلاش کنید." }, { status: 500 });
